@@ -1,0 +1,44 @@
+{
+    "trip": {
+        "totalTripKm": 1900,
+        "ratePerKm": 13
+    },
+    "passengers": [
+        {
+            "id": 1,
+            "name": "Parul",
+            "pickup": 12000,
+            "drop": 13900
+        },
+        {
+            "id": 2,
+            "name": "Mital",
+            "pickup": 12000,
+            "drop": 13900
+        },
+        {
+            "id": 3,
+            "name": "Mitu",
+            "pickup": 12087,
+            "drop": 13813
+        },
+        {
+            "id": 4,
+            "name": "Narendra",
+            "pickup": 12342,
+            "drop": 13558
+        },
+        {
+            "id": 5,
+            "name": "Nirajbhai",
+            "pickup": 12342,
+            "drop": 13558
+        },
+        {
+            "id": 6,
+            "name": "Prakash",
+            "pickup": 12472,
+            "drop": 13428
+        }
+    ]
+}
