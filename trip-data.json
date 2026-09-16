@@ -7,38 +7,38 @@
     {
       "id": 1,
       "name": "Parul",
-      "pickupOdometer": 0,
-      "dropOdometer": 1900
+      "pickup": 0,
+      "drop": 1900
     },
     {
       "id": 2,
       "name": "Mital",
-      "pickupOdometer": 0,
-      "dropOdometer": 1900
+      "pickup": 0,
+      "drop": 1900
     },
     {
       "id": 3,
       "name": "Mitu",
-      "pickupOdometer": 87,
-      "dropOdometer": 1813
+      "pickup": 87,
+      "drop": 1813
     },
     {
       "id": 4,
       "name": "Narendra",
-      "pickupOdometer": 342,
-      "dropOdometer": 1558
+      "pickup": 342,
+      "drop": 1558
     },
     {
       "id": 5,
       "name": "Nirajbhai",
-      "pickupOdometer": 342,
-      "dropOdometer": 1558
+      "pickup": 342,
+      "drop": 1558
     },
     {
       "id": 6,
       "name": "Prakash",
-      "pickupOdometer": 472,
-      "dropOdometer": 1428
+      "pickup": 472,
+      "drop": 1428
     }
   ]
 }
