@@ -7,32 +7,38 @@
     {
       "id": 1,
       "name": "Parul",
-      "travelKm": 1900
+      "pickupOdometer": 0,
+      "dropOdometer": 1900
     },
     {
       "id": 2,
       "name": "Mital",
-      "travelKm": 1900
+      "pickupOdometer": 0,
+      "dropOdometer": 1900
     },
     {
       "id": 3,
       "name": "Mitu",
-      "travelKm": 1726
+      "pickupOdometer": 87,
+      "dropOdometer": 1813
     },
     {
       "id": 4,
       "name": "Narendra",
-      "travelKm": 1216
+      "pickupOdometer": 342,
+      "dropOdometer": 1558
     },
     {
       "id": 5,
       "name": "Nirajbhai",
-      "travelKm": 1216
+      "pickupOdometer": 342,
+      "dropOdometer": 1558
     },
     {
       "id": 6,
       "name": "Prakash",
-      "travelKm": 956
+      "pickupOdometer": 472,
+      "dropOdometer": 1428
     }
   ]
 }
