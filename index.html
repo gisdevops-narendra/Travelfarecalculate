@@ -1,667 +1,724 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Trip Fare Splitter</title>
+<title>Trip Expense Splitter</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f7fb;
+        color: #1f2937;
+    }
+
+    button,
+    input,
+    select {
+        font: inherit;
+    }
+
+    /* =========================
+       HEADER
+    ========================= */
+
+    .header {
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 15px 20px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .header-inner {
+        max-width: 1200px;
+        margin: auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .header-title {
+        font-size: 21px;
+        font-weight: 700;
+    }
+
+    .header-subtitle {
+        color: #6b7280;
+        font-size: 12px;
+        margin-top: 3px;
+    }
+
+    .back-btn {
+        border: 1px solid #d1d5db;
+        background: white;
+        padding: 8px 13px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: none;
+    }
+
+    .back-btn:hover {
+        background: #f3f4f6;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    /* =========================
+       SCREENS
+    ========================= */
+
+    .screen {
+        display: none;
+    }
+
+    .screen.active {
+        display: block;
+    }
+
+    /* =========================
+       CARDS
+    ========================= */
+
+    .card {
+        background: white;
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e5e7eb;
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .card-note {
+        color: #6b7280;
+        font-size: 13px;
+        margin: -8px 0 14px;
+    }
+
+    /* =========================
+       MODULE PICKER
+    ========================= */
+
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+    }
+
+    .module-card {
+        border: 1px solid #e5e7eb;
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 20px 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+    }
+
+    .module-card:hover {
+        border-color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .module-icon {
+        font-size: 30px;
+    }
+
+    .module-name {
+        font-size: 17px;
+        font-weight: 700;
+        margin-top: 8px;
+    }
+
+    .module-total {
+        color: #6b7280;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    /* =========================
+       SETTINGS GRID
+    ========================= */
+
+    .trip-settings {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .setting-box label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .setting-box input {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #d1d5db;
+        border-radius: 9px;
+    }
+
+    /* =========================
+       SUMMARY
+    ========================= */
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .summary-box {
+        padding: 15px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+    }
+
+    .summary-label {
+        color: #6b7280;
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+
+    .summary-value {
+        font-size: 21px;
+        font-weight: 700;
+    }
+
+    /* =========================
+       TABLE
+    ========================= */
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .wide-table {
+        min-width: 850px;
+    }
+
+    th {
+        background: #f8fafc;
+        font-size: 13px;
+        text-align: left;
+        padding: 12px 10px;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 10px;
+        border-bottom: 1px solid #edf0f3;
+        vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    td input {
+        width: 100%;
+        padding: 9px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        outline: none;
+    }
+
+    td input:focus {
+        border-color: #2563eb;
+    }
+
+    .travel-km,
+    .fare,
+    .amount {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .empty-row td {
+        color: #6b7280;
+        text-align: center;
+        padding: 18px;
+    }
+
+    .delete-btn {
+        border: 0;
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 8px 10px;
+        border-radius: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .delete-btn:hover {
+        background: #fecaca;
+    }
+
+    /* =========================
+       ENTRY CARDS
+    ========================= */
+
+    .entry {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 14px;
+        background: #fcfdff;
+    }
+
+    .entry-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .entry-index {
+        font-weight: 700;
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .entry-fields {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 12px;
+    }
+
+    .entry-fields label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .entry-fields input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        outline: none;
+    }
+
+    .entry-fields input:focus {
+        border-color: #2563eb;
+    }
+
+    .people-label {
+        font-size: 12px;
+        font-weight: 600;
+        margin: 14px 0 8px;
+    }
+
+    .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid #d1d5db;
+        background: white;
+        border-radius: 999px;
+        padding: 7px 13px;
+        font-size: 14px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .chip.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 600;
+    }
+
+    .chip input {
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .entry-result {
+        margin-top: 13px;
+        padding: 11px 13px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 9px;
+        font-size: 14px;
+    }
+
+    .entry-result b {
+        color: #111827;
+    }
+
+    .link-btn {
+        border: 0;
+        background: none;
+        color: #2563eb;
+        cursor: pointer;
+        padding: 0;
+        font-size: 13px;
+        text-decoration: underline;
+    }
+
+    .chip-actions {
+        display: flex;
+        gap: 14px;
+        margin-top: 10px;
+    }
+
+    /* =========================
+       BUTTONS
+    ========================= */
+
+    .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .btn {
+        border: 0;
+        border-radius: 9px;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-secondary {
+        background: #e5e7eb;
+        color: #1f2937;
+    }
+
+    .btn-secondary:hover {
+        background: #d8dce2;
+    }
+
+    .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #15803d;
+    }
+
+    .btn-warning {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .hidden-file {
+        display: none;
+    }
+
+    /* =========================
+       FORMULA
+    ========================= */
+
+    .formula {
+        background: #f8fafc;
+        padding: 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .formula strong {
+        color: #111827;
+    }
+
+    /* =========================
+       TOAST
+    ========================= */
+
+    .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%) translateY(20px);
+        background: #111827;
+        color: white;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 14px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s, transform .2s;
+        z-index: 50;
+        max-width: 90vw;
+        text-align: center;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.error {
+        background: #b91c1c;
+    }
+
+    .toast.success {
+        background: #15803d;
+    }
+
+    .footer-note {
+        text-align: center;
+        color: #6b7280;
+        font-size: 12px;
+        margin: 25px 0 10px;
+    }
+
+    .sync-status {
+        font-weight: 600;
+    }
+
+    .sync-saved {
+        color: #15803d;
+    }
+
+    .sync-saving,
+    .sync-loading {
+        color: #6b7280;
+    }
+
+    .sync-pending {
+        color: #f59e0b;
+    }
+
+    .sync-error {
+        color: #dc2626;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 800px) {
+        .module-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
+    }
 
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f4f7fb;
-            color: #1f2937;
-        }
+    /* =========================
+       PAID BY
+    ========================= */
 
-        button,
-        input {
-            font: inherit;
-        }
+    .paid-by-row {
+        margin: 4px 0 10px;
+        max-width: 320px;
+    }
 
-        /* =========================
-           LOGIN
-        ========================= */
+    .paid-by-row label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
 
-        .login-page {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #eef4ff, #f8fafc);
-        }
+    .paid-by-row select,
+    .setting-box select {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #d1d5db;
+        border-radius: 9px;
+        background: white;
+    }
 
-        .login-box {
-            width: 100%;
-            max-width: 400px;
-            background: white;
-            border-radius: 18px;
-            padding: 30px 24px;
-            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
-        }
+    .balance-positive {
+        color: #15803d;
+        font-weight: 700;
+        white-space: nowrap;
+    }
 
-        .login-icon {
-            text-align: center;
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
+    .balance-negative {
+        color: #dc2626;
+        font-weight: 700;
+        white-space: nowrap;
+    }
 
-        .login-box h1 {
-            text-align: center;
-            margin: 0 0 8px;
-            font-size: 25px;
-        }
+    .settle-tx {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #f8fafc;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
 
-        .login-subtitle {
-            text-align: center;
-            color: #6b7280;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 7px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 13px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            outline: none;
-        }
-
-        .form-group input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 13px;
-            border: 0;
-            border-radius: 10px;
-            background: #2563eb;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .login-btn:hover {
-            background: #1d4ed8;
-        }
-
-        .login-error {
-            display: none;
-            color: #dc2626;
-            background: #fef2f2;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        /* =========================
-           APP
-        ========================= */
-
-        .app {
-            display: none;
+    @media (max-width: 700px) {
+        .container {
+            padding: 12px;
         }
 
         .header {
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 15px 20px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        .header-inner {
-            max-width: 1200px;
-            margin: auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
+            padding: 12px;
         }
 
         .header-title {
-            font-size: 21px;
-            font-weight: 700;
+            font-size: 18px;
         }
 
-        .header-subtitle {
-            color: #6b7280;
-            font-size: 12px;
-            margin-top: 3px;
+        .trip-settings,
+        .summary-grid,
+        .entry-fields {
+            grid-template-columns: 1fr;
         }
-
-        .logout-btn {
-            border: 1px solid #d1d5db;
-            background: white;
-            padding: 8px 13px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-        }
-
-        /* =========================
-           CARDS
-        ========================= */
 
         .card {
-            background: white;
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 18px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-            border: 1px solid #e5e7eb;
+            padding: 14px;
         }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-
-        .trip-settings {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-
-        .setting-box label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .setting-box input {
-            width: 100%;
-            padding: 11px;
-            border: 1px solid #d1d5db;
-            border-radius: 9px;
-        }
-
-        /* =========================
-           SUMMARY
-        ========================= */
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .summary-box {
-            padding: 15px;
-            border-radius: 12px;
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-        }
-
-        .summary-label {
-            color: #6b7280;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .summary-value {
-            font-size: 21px;
-            font-weight: 700;
-        }
-
-        /* =========================
-           TABLE
-        ========================= */
-
-        .table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-        }
-
-        table {
-            width: 100%;
-            min-width: 850px;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: #f8fafc;
-            font-size: 13px;
-            text-align: left;
-            padding: 12px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            white-space: nowrap;
-        }
-
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #edf0f3;
-            vertical-align: middle;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        td input {
-            width: 100%;
-            padding: 9px;
-            border: 1px solid #d1d5db;
-            border-radius: 7px;
-            outline: none;
-        }
-
-        td input:focus {
-            border-color: #2563eb;
-        }
-
-        .travel-km {
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .fare {
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .delete-btn {
-            border: 0;
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 8px 10px;
-            border-radius: 7px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .delete-btn:hover {
-            background: #fecaca;
-        }
-
-        /* =========================
-           BUTTONS
-        ========================= */
 
         .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
+            flex-direction: column;
         }
 
-        .btn {
-            border: 0;
-            border-radius: 9px;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-weight: 600;
+        .actions .btn {
+            width: 100%;
         }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-secondary {
-            background: #e5e7eb;
-            color: #1f2937;
-        }
-
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #15803d;
-        }
-
-        .btn-warning {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .hidden-file {
-            display: none;
-        }
-
-        /* =========================
-           FORMULA
-        ========================= */
-
-        .formula {
-            background: #f8fafc;
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        .formula strong {
-            color: #111827;
-        }
-
-        /* =========================
-           STATUS
-        ========================= */
-
-        .status {
-            margin-top: 12px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            display: none;
-        }
-
-        .status.info {
-            display: block;
-            background: #eff6ff;
-            color: #1d4ed8;
-        }
-
-        .status.success {
-            display: block;
-            background: #f0fdf4;
-            color: #15803d;
-        }
-
-        .status.error {
-            display: block;
-            background: #fef2f2;
-            color: #b91c1c;
-        }
-
-        .footer-note {
-            text-align: center;
-            color: #6b7280;
-            font-size: 12px;
-            margin: 25px 0 10px;
-        }
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width: 700px) {
-            .container {
-                padding: 12px;
-            }
-
-            .header {
-                padding: 12px;
-            }
-
-            .header-title {
-                font-size: 18px;
-            }
-
-            .trip-settings {
-                grid-template-columns: 1fr;
-            }
-
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .card {
-                padding: 14px;
-            }
-
-            .actions {
-                flex-direction: column;
-            }
-
-            .actions .btn {
-                width: 100%;
-            }
-
-            .logout-btn {
-                font-size: 12px;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 
 <body>
 
-<!-- ============================================================
-     LOGIN PAGE
-============================================================ -->
+<header class="header">
 
-<div id="loginPage" class="login-page">
+    <div class="header-inner">
 
-    <div class="login-box">
-
-        <div class="login-icon">🚗</div>
-
-        <h1>Trip Fare Splitter</h1>
-
-        <div class="login-subtitle">
-            Login to manage your trip fare
-        </div>
-
-        <div id="loginError" class="login-error">
-            Invalid username or password.
-        </div>
-
-        <form id="loginForm">
-
-            <div class="form-group">
-                <label for="username">Username</label>
-
-                <input
-                    type="text"
-                    id="username"
-                    autocomplete="username"
-                    placeholder="Enter username"
-                    required
-                >
+        <div>
+            <div class="header-title" id="headerTitle">
+                🧾 Trip Expense Splitter
             </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-
-                <input
-                    type="password"
-                    id="password"
-                    autocomplete="current-password"
-                    placeholder="Enter password"
-                    required
-                >
+            <div class="header-subtitle" id="headerSubtitle">
+                Travel, food, sightseeing and hotel costs in one place
             </div>
+        </div>
 
-            <button type="submit" class="login-btn">
-                Login
-            </button>
-
-        </form>
+        <button id="backBtn" class="back-btn">
+            ← Back
+        </button>
 
     </div>
 
-</div>
+</header>
 
 
-<!-- ============================================================
-     MAIN APP
-============================================================ -->
+<main class="container">
 
-<div id="app" class="app">
+    <!-- ============================================================
+         HOME SCREEN
+    ============================================================ -->
 
-    <header class="header">
+    <section id="homeScreen" class="screen active">
 
-        <div class="header-inner">
+        <div class="card">
 
-            <div>
-                <div class="header-title">
-                    🚗 Trip Fare Splitter
-                </div>
-
-                <div class="header-subtitle">
-                    Odometer-based fare calculation
-                </div>
+            <div class="card-title">
+                What do you want to split?
             </div>
 
-            <button id="logoutBtn" class="logout-btn">
-                Logout
-            </button>
+            <div class="module-grid">
+
+                <button class="module-card" data-go="travel">
+                    <div class="module-icon">🚗</div>
+                    <div class="module-name">Travel</div>
+                    <div class="module-total" id="homeTotalTravel">₹0</div>
+                </button>
+
+                <button class="module-card" data-go="food">
+                    <div class="module-icon">🍽️</div>
+                    <div class="module-name">Food</div>
+                    <div class="module-total" id="homeTotalFood">₹0</div>
+                </button>
+
+                <button class="module-card" data-go="sightseeing">
+                    <div class="module-icon">🏞️</div>
+                    <div class="module-name">Sightseeing</div>
+                    <div class="module-total" id="homeTotalSight">₹0</div>
+                </button>
+
+                <button class="module-card" data-go="hotel">
+                    <div class="module-icon">🏨</div>
+                    <div class="module-name">Hotel</div>
+                    <div class="module-total" id="homeTotalHotel">₹0</div>
+                </button>
+
+                <button class="module-card" data-go="settlement">
+                    <div class="module-icon">⚖️</div>
+                    <div class="module-name">Settle up</div>
+                    <div class="module-total" id="homeSettleNote">Who owes who</div>
+                </button>
+
+            </div>
 
         </div>
 
-    </header>
 
-
-    <main class="container">
-
-        <!-- =========================
-             TRIP SETTINGS
-        ========================== -->
-
-        <section class="card">
+        <div class="card">
 
             <div class="card-title">
-                Trip Details
+                Trip members
             </div>
 
-            <div class="trip-settings">
-
-                <div class="setting-box">
-
-                    <label for="totalTripKm">
-                        Total Trip KM
-                    </label>
-
-                    <input
-                        type="number"
-                        id="totalTripKm"
-                        min="0"
-                        step="1"
-                    >
-
-                </div>
-
-
-                <div class="setting-box">
-
-                    <label for="ratePerKm">
-                        Vehicle Rate / KM (₹)
-                    </label>
-
-                    <input
-                        type="number"
-                        id="ratePerKm"
-                        min="0"
-                        step="0.01"
-                    >
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =========================
-             SUMMARY
-        ========================== -->
-
-        <section class="card">
-
-            <div class="card-title">
-                Trip Summary
-            </div>
-
-            <div class="summary-grid">
-
-                <div class="summary-box">
-
-                    <div class="summary-label">
-                        Total Trip Cost
-                    </div>
-
-                    <div
-                        id="totalTripCost"
-                        class="summary-value"
-                    >
-                        ₹0
-                    </div>
-
-                </div>
-
-
-                <div class="summary-box">
-
-                    <div class="summary-label">
-                        Total Passenger KM
-                    </div>
-
-                    <div
-                        id="totalPassengerKm"
-                        class="summary-value"
-                    >
-                        0 KM
-                    </div>
-
-                </div>
-
-
-                <div class="summary-box">
-
-                    <div class="summary-label">
-                        Passengers
-                    </div>
-
-                    <div
-                        id="passengerCount"
-                        class="summary-value"
-                    >
-                        0
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =========================
-             PASSENGERS
-        ========================== -->
-
-        <section class="card">
-
-            <div class="card-title">
-                Passenger Details
+            <div class="card-note">
+                Add everyone once here. Food, sightseeing and hotel use this list.
             </div>
 
             <div class="table-wrapper">
@@ -669,1036 +726,3056 @@
                 <table>
 
                     <thead>
-
                         <tr>
-                            <th>#</th>
-                            <th>Passenger Name</th>
-                            <th>Pickup Odometer</th>
-                            <th>Drop Odometer</th>
-                            <th>Travel KM</th>
-                            <th>Fare</th>
-                            <th>Delete</th>
+                            <th style="width:60px">#</th>
+                            <th>Name</th>
+                            <th style="width:120px">Remove</th>
                         </tr>
-
                     </thead>
 
-                    <tbody id="passengerTableBody">
-                    </tbody>
+                    <tbody id="memberTableBody"></tbody>
 
                 </table>
 
             </div>
 
-
             <div class="actions">
 
-                <button
-                    id="addPassengerBtn"
-                    class="btn btn-primary"
-                >
-                    ＋ Add Passenger
+                <button id="addMemberBtn" class="btn btn-primary">
+                    ＋ Add member
                 </button>
-
-
-                <button
-                    id="exportBtn"
-                    class="btn btn-success"
-                >
-                    📥 Export JSON
-                </button>
-
-
-                <button
-                    id="importBtn"
-                    class="btn btn-warning"
-                >
-                    📤 Import JSON
-                </button>
-
-                <input
-                    type="file"
-                    id="importFile"
-                    class="hidden-file"
-                    accept=".json,application/json"
-                >
 
             </div>
 
-
-            <div id="statusMessage" class="status"></div>
-
-        </section>
+        </div>
 
 
-        <!-- =========================
-             FORMULA
-        ========================== -->
-
-        <section class="card">
+        <div class="card">
 
             <div class="card-title">
-                How Fare Is Calculated
+                Who owes what
+            </div>
+
+            <div class="card-note">
+                Everything added across the four sections, per person.
+            </div>
+
+            <div class="table-wrapper">
+
+                <table class="wide-table">
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Travel</th>
+                            <th>Food</th>
+                            <th>Sightseeing</th>
+                            <th>Hotel</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="overallTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Your data
+            </div>
+
+            <div class="card-note">
+                Changes stay in this browser tab only. Press
+                <b>💾 Save</b> to validate them and write them to Firestore —
+                nothing is sent automatically while you type.
+                Status: <span id="syncStatus" class="sync-status sync-loading">⏳ Loading…</span>
+            </div>
+
+            <div class="actions">
+
+                <button id="updateDataBtn" class="btn btn-primary">
+                    💾 Save
+                </button>
+
+                <button id="exportBtn" class="btn btn-success">
+                    📥 Export backup
+                </button>
+
+                <button id="importBtn" class="btn btn-warning">
+                    📤 Import backup
+                </button>
+
+                <input type="file" id="importFile" class="hidden-file"
+                       accept=".json,application/json">
+
+                <button id="resetBtn" class="btn btn-danger">
+                    🗑 Clear all data
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         TRAVEL SCREEN
+    ============================================================ -->
+
+    <section id="travelScreen" class="screen">
+
+        <div class="card">
+
+            <div class="card-title">
+                Trip details
+            </div>
+
+            <div class="trip-settings">
+
+                <div class="setting-box">
+                    <label for="totalTripKm">Total trip KM</label>
+                    <input type="number" id="totalTripKm" min="0" step="1">
+                </div>
+
+                <div class="setting-box">
+                    <label for="ratePerKm">Vehicle rate / KM (₹)</label>
+                    <input type="number" id="ratePerKm" min="0" step="0.01">
+                </div>
+
+                <div class="setting-box">
+                    <label for="tripPaidBy">Paid by (fuel / rental)</label>
+                    <select id="tripPaidBy"></select>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Trip summary
+            </div>
+
+            <div class="summary-grid">
+
+                <div class="summary-box">
+                    <div class="summary-label">Total trip cost</div>
+                    <div id="totalTripCost" class="summary-value">₹0</div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-label">Total passenger KM</div>
+                    <div id="totalPassengerKm" class="summary-value">0 KM</div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-label">Passengers</div>
+                    <div id="passengerCount" class="summary-value">0</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Passenger details
+            </div>
+
+            <div class="table-wrapper">
+
+                <table class="wide-table">
+
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Passenger name</th>
+                            <th>Pickup odometer</th>
+                            <th>Drop odometer</th>
+                            <th>Travel KM</th>
+                            <th>Fare</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="passengerTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+            <div class="actions">
+
+                <button id="addPassengerBtn" class="btn btn-primary">
+                    ＋ Add passenger
+                </button>
+
+                <button id="fillFromMembersBtn" class="btn btn-secondary">
+                    Add trip members
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                How the fare is split
             </div>
 
             <div class="formula">
 
-                <strong>1. Total Trip Cost</strong><br>
-                Total Trip KM × Rate per KM
+                <strong>1. Total trip cost</strong><br>
+                Total trip KM × rate per KM
 
                 <br><br>
 
-                <strong>2. Passenger Travel KM</strong><br>
-                Drop Odometer − Pickup Odometer
+                <strong>2. Passenger travel KM</strong><br>
+                Drop odometer − pickup odometer
 
                 <br><br>
 
-                <strong>3. Passenger Fare</strong><br>
-                (Passenger Travel KM ÷ Total Passenger KM)
-                × Total Trip Cost
+                <strong>3. Passenger fare</strong><br>
+                (Passenger travel KM ÷ total passenger KM) × total trip cost
 
             </div>
 
-        </section>
-
-
-        <div class="footer-note">
-            Data is stored in your separate JSON file.
-            Export the JSON after making changes to keep the updated file.
         </div>
 
-    </main>
-
-</div>
+    </section>
 
 
-<script>
-    /* ============================================================
-       LOGIN
-    ============================================================ */
+    <!-- ============================================================
+         FOOD SCREEN
+    ============================================================ -->
 
-    const LOGIN_USERNAME = "parul";
-    const LOGIN_PASSWORD = "Parul@1996";
+    <section id="foodScreen" class="screen">
 
-    const loginPage = document.getElementById("loginPage");
-    const app = document.getElementById("app");
+        <div class="card">
 
-    const loginForm = document.getElementById("loginForm");
-    const loginError = document.getElementById("loginError");
+            <div class="card-title">
+                Food summary
+            </div>
 
-    loginForm.addEventListener("submit", function (event) {
+            <div class="summary-grid">
 
-        event.preventDefault();
+                <div class="summary-box">
+                    <div class="summary-label">Total food cost</div>
+                    <div id="foodTotalCost" class="summary-value">₹0</div>
+                </div>
 
-        const username =
-            document.getElementById("username").value.trim();
+                <div class="summary-box">
+                    <div class="summary-label">Bills added</div>
+                    <div id="foodEntryCount" class="summary-value">0</div>
+                </div>
 
-        const password =
-            document.getElementById("password").value;
+                <div class="summary-box">
+                    <div class="summary-label">People eating</div>
+                    <div id="foodPeopleCount" class="summary-value">0</div>
+                </div>
 
-        if (
-            username === LOGIN_USERNAME &&
-            password === LOGIN_PASSWORD
-        ) {
+            </div>
 
-            loginPage.style.display = "none";
-            app.style.display = "block";
+        </div>
 
-            loadTripData();
+
+        <div class="card">
+
+            <div class="card-title">
+                Bills
+            </div>
+
+            <div class="card-note">
+                Add a bill, then tick who shared it. The amount splits equally between them.
+            </div>
+
+            <div id="foodEntries"></div>
+
+            <div class="actions">
+
+                <button id="addFoodBtn" class="btn btn-primary">
+                    ＋ Add bill
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Food split per person
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Bills shared</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="foodSplitBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         SIGHTSEEING SCREEN
+    ============================================================ -->
+
+    <section id="sightseeingScreen" class="screen">
+
+        <div class="card">
+
+            <div class="card-title">
+                Sightseeing summary
+            </div>
+
+            <div class="summary-grid">
+
+                <div class="summary-box">
+                    <div class="summary-label">Total sightseeing cost</div>
+                    <div id="sightTotalCost" class="summary-value">₹0</div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-label">Places added</div>
+                    <div id="sightEntryCount" class="summary-value">0</div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-label">People visiting</div>
+                    <div id="sightPeopleCount" class="summary-value">0</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Places
+            </div>
+
+            <div class="card-note">
+                Ticket price is charged per visitor. Other cost (guide, parking, boat) splits equally between them.
+            </div>
+
+            <div id="sightEntries"></div>
+
+            <div class="actions">
+
+                <button id="addSightBtn" class="btn btn-primary">
+                    ＋ Add place
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Sightseeing split per person
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Places visited</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="sightSplitBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         HOTEL SCREEN
+    ============================================================ -->
+
+    <section id="hotelScreen" class="screen">
+
+        <div class="card">
+
+            <div class="card-title">
+                Hotel summary
+            </div>
+
+            <div class="summary-grid">
+
+                <div class="summary-box">
+                    <div class="summary-label">Total hotel cost</div>
+                    <div id="hotelTotalCost" class="summary-value">₹0</div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-label">Rooms added</div>
+                    <div id="hotelEntryCount" class="summary-value">0</div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-label">People staying</div>
+                    <div id="hotelPeopleCount" class="summary-value">0</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Rooms
+            </div>
+
+            <div class="card-note">
+                Room cost is nights × rent per night, split equally between the people staying in that room.
+            </div>
+
+            <div id="hotelEntries"></div>
+
+            <div class="actions">
+
+                <button id="addHotelBtn" class="btn btn-primary">
+                    ＋ Add room
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Hotel split per person
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Rooms</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="hotelSplitBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         SETTLEMENT SCREEN
+    ============================================================ -->
+
+    <section id="settlementScreen" class="screen">
+
+        <div class="card">
+
+            <div class="card-title">
+                Settlement summary
+            </div>
+
+            <div class="summary-grid" style="grid-template-columns:repeat(2,1fr)">
+
+                <div class="summary-box">
+                    <div class="summary-label">Total spent (all paid)</div>
+                    <div id="settleTotalPaid" class="summary-value">₹0</div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-label">Payments needed to settle</div>
+                    <div id="settleTxCount" class="summary-value">0</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Per person
+            </div>
+
+            <div class="card-note">
+                Paid = what they actually spent for the group. Owes = their real share, based only on the
+                travel, food, sightseeing and hotel expenses they were actually part of.
+            </div>
+
+            <div class="table-wrapper">
+
+                <table class="wide-table">
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Paid</th>
+                            <th>Owes (usage)</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="settlementTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Who should pay whom
+            </div>
+
+            <div class="card-note">
+                The smallest possible number of payments to settle the whole trip.
+            </div>
+
+            <div id="settlementTransactions"></div>
+
+        </div>
+
+    </section>
+
+
+    <div class="footer-note">
+        Trip ID: <b id="footerTripId">default</b> — stored in Firestore
+        (<code>trips/&lt;tripId&gt;</code>). Add <code>?trip=yourname</code>
+        to the URL to keep a separate trip.
+    </div>
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+
+<script type="module">
+/* ============================================================
+   FIREBASE (Cloud Firestore replaces localStorage)
+============================================================ */
+
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+import {
+    getAuth,
+    signInAnonymously,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBhpRW6k8goS82v8_auN7opwZsa3iopb5U",
+    authDomain: "formal-stratum-377718.firebaseapp.com",
+    projectId: "formal-stratum-377718",
+    storageBucket: "formal-stratum-377718.firebasestorage.app",
+    messagingSenderId: "542376684101",
+    appId: "1:542376684101:web:11690430faa9ed6356912c"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+
+const db = getFirestore(firebaseApp);
+
+
+/* Everyone hitting this static page shares the same Firestore project,
+   so each trip lives at trips/{tripId}. ?trip=xyz in the URL keeps
+   separate trips apart; anyone who doesn't pass one shares "default". */
+
+function getTripId() {
+
+    const params = new URLSearchParams(window.location.search);
+    const raw = (params.get("trip") || "default").trim().toLowerCase();
+    const safe = raw.replace(/[^a-z0-9-_]/g, "");
+
+    return safe || "default";
+
+}
+
+const TRIP_ID = getTripId();
+
+
+function tripDocRef() {
+    return doc(db, "trips", TRIP_ID);
+}
+
+
+let authReadyPromise = null;
+
+
+/* Anonymous auth only — no backend, no service account. This just
+   gives Firestore's security rules a request.auth to check, instead
+   of leaving the database wide open to anyone with the public API key. */
+
+function ensureSignedIn() {
+
+    if (authReadyPromise) {
+        return authReadyPromise;
+    }
+
+    authReadyPromise = new Promise(function (resolve, reject) {
+
+        if (auth.currentUser) {
+            resolve(auth.currentUser);
+            return;
+        }
+
+        onAuthStateChanged(auth, function (user) {
+
+            if (user) {
+                resolve(user);
+            }
+
+        }, reject);
+
+        signInAnonymously(auth).catch(reject);
+
+    });
+
+    return authReadyPromise;
+
+}
+
+
+function setSyncStatus(state) {
+
+    const el = document.getElementById("syncStatus");
+
+    if (!el) {
+        return;
+    }
+
+    const labels = {
+        loading: "⏳ Loading…",
+        saved: "☁️ Synced",
+        saving: "⏳ Saving…",
+        pending: "✏️ Unsaved changes — press Save",
+        error: "⚠️ Sync error — see toast"
+    };
+
+    el.textContent = labels[state] || "";
+    el.className = "sync-status sync-" + state;
+
+}
+
+
+/* Guards against saving something malformed. Since `data` is always
+   built through the UI this should never fail, but it's the same
+   safety net the Import button already relies on, now also covering
+   the Save button. */
+
+function validateTripData(payload) {
+
+    if (!payload || typeof payload !== "object") {
+        return { valid: false, error: "Trip data is not a valid object." };
+    }
+
+    let json;
+
+    try {
+        json = JSON.stringify(payload);
+    } catch (error) {
+        return { valid: false, error: "Trip data could not be converted to JSON." };
+    }
+
+    if (json.length > 900000) {
+        return {
+            valid: false,
+            error: "Trip data is too large for a single Firestore document (close to the 1MB limit)."
+        };
+    }
+
+    const required = ["members", "travel", "food", "sightseeing", "hotel"];
+
+    const missing = required.filter(function (key) {
+        return !(key in payload);
+    });
+
+    if (missing.length > 0) {
+        return {
+            valid: false,
+            error: "Trip data is missing required section(s): " + missing.join(", ")
+        };
+    }
+
+    return { valid: true };
+
+}
+
+
+/* ============================================================
+   STORAGE
+============================================================ */
+
+
+function emptyData() {
+
+    return {
+        members: [],
+        travel: {
+            trip: {
+                totalTripKm: 0,
+                ratePerKm: 0,
+                paidBy: ""
+            },
+            passengers: []
+        },
+        food: {
+            entries: []
+        },
+        sightseeing: {
+            entries: []
+        },
+        hotel: {
+            entries: []
+        }
+    };
+
+}
+
+
+let data = emptyData();
+
+
+/* Called on every edit (same call sites as the old localStorage
+   version). It no longer talks to Firestore at all — it only marks
+   the trip as having unsaved changes. Nothing reaches the network
+   until the Save button (flushSave) is pressed. */
+
+function saveData() {
+
+    setSyncStatus("pending");
+
+}
+
+
+async function flushSave(showFeedback) {
+
+    const clean = normalise(data);
+    const check = validateTripData(clean);
+
+    if (!check.valid) {
+
+        setSyncStatus("error");
+        showToast("Cannot save: " + check.error, "error");
+
+        return false;
+
+    }
+
+    data = clean;
+
+    setSyncStatus("saving");
+
+    try {
+
+        await ensureSignedIn();
+        await setDoc(tripDocRef(), clean);
+
+        setSyncStatus("saved");
+
+        if (showFeedback) {
+            showToast("Trip data saved to Firestore.", "success");
+        }
+
+        return true;
+
+    } catch (error) {
+
+        console.error(error);
+
+        setSyncStatus("error");
+
+        showToast(
+            "Could not save to Firestore: " + error.message,
+            "error"
+        );
+
+        return false;
+
+    }
+
+}
+
+
+async function loadData() {
+
+    setSyncStatus("loading");
+
+    try {
+
+        await ensureSignedIn();
+
+        const snap = await getDoc(tripDocRef());
+
+        if (snap.exists()) {
+
+            data = normalise(snap.data());
+
+            setSyncStatus("saved");
 
         } else {
 
-            loginError.style.display = "block";
+            /* No write here — a brand-new trip only reaches Firestore
+               once the user presses Save for the first time. */
+
+            data = emptyData();
+
+            setSyncStatus("pending");
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        showToast(
+            "Could not load trip data from Firestore. Starting with an empty trip.",
+            "error"
+        );
+
+        data = emptyData();
+
+        setSyncStatus("error");
+
+    }
+
+}
+
+
+/* Accepts both the new format and the old trip-data.json format. */
+
+function normalise(input) {
+
+    const base = emptyData();
+
+    if (!input || typeof input !== "object") {
+        return base;
+    }
+
+    /* Old format: { trip: {...}, passengers: [...] } */
+
+    if (input.trip && Array.isArray(input.passengers)) {
+
+        base.travel.trip.totalTripKm = num(input.trip.totalTripKm);
+        base.travel.trip.ratePerKm = num(input.trip.ratePerKm);
+        base.travel.trip.paidBy = String(input.trip.paidBy || "");
+        base.travel.passengers = input.passengers.map(function (p, i) {
+            return {
+                id: p.id || i + 1,
+                name: String(p.name || ""),
+                pickup: num(p.pickup),
+                drop: num(p.drop)
+            };
+        });
+
+        return base;
+
+    }
+
+    if (Array.isArray(input.members)) {
+
+        base.members = input.members
+            .filter(function (m) {
+                return m && typeof m === "object";
+            })
+            .map(function (m) {
+                return {
+                    id: m.id || uid(),
+                    name: String(m.name || "")
+                };
+            });
+
+    }
+
+    if (input.travel && typeof input.travel === "object") {
+
+        base.travel.trip.totalTripKm = num(
+            input.travel.trip && input.travel.trip.totalTripKm
+        );
+
+        base.travel.trip.ratePerKm = num(
+            input.travel.trip && input.travel.trip.ratePerKm
+        );
+
+        base.travel.trip.paidBy = String(
+            (input.travel.trip && input.travel.trip.paidBy) || ""
+        );
+
+        if (Array.isArray(input.travel.passengers)) {
+
+            base.travel.passengers = input.travel.passengers.map(
+                function (p, i) {
+                    return {
+                        id: p.id || i + 1,
+                        name: String(p.name || ""),
+                        pickup: num(p.pickup),
+                        drop: num(p.drop)
+                    };
+                }
+            );
+
+        }
+
+    }
+
+    ["food", "sightseeing", "hotel"].forEach(function (key) {
+
+        const section = input[key];
+
+        if (!section || !Array.isArray(section.entries)) {
+            return;
+        }
+
+        base[key].entries = section.entries.map(function (e) {
+
+            return {
+                id: e.id || uid(),
+                label: String(e.label || ""),
+                amount: num(e.amount),
+                pricePerPerson: num(e.pricePerPerson),
+                extraCost: num(e.extraCost),
+                nights: num(e.nights),
+                ratePerNight: num(e.ratePerNight),
+                paidBy: String(e.paidBy || ""),
+                people: Array.isArray(e.people)
+                    ? e.people.map(String)
+                    : []
+            };
+
+        });
+
+    });
+
+    return base;
+
+}
+
+
+/* ============================================================
+   HELPERS
+============================================================ */
+
+function num(value) {
+
+    const n = Number(value);
+
+    return isFinite(n) ? n : 0;
+
+}
+
+
+function uid() {
+
+    return (
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 7)
+    );
+
+}
+
+
+function formatNumber(value) {
+
+    return Number(value || 0).toLocaleString("en-IN", {
+        maximumFractionDigits: 2
+    });
+
+}
+
+
+function formatCurrency(value) {
+
+    return "₹" + Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    });
+
+}
+
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+function memberName(id) {
+
+    const member = data.members.find(function (m) {
+        return m.id === id;
+    });
+
+    if (!member) {
+        return "";
+    }
+
+    return member.name.trim() || "Unnamed";
+
+}
+
+
+function validMemberIds(entry) {
+
+    return entry.people.filter(function (id) {
+
+        return data.members.some(function (m) {
+            return m.id === id;
+        });
+
+    });
+
+}
+
+
+let toastTimer = null;
+
+
+function showToast(message, type) {
+
+    const toast = document.getElementById("toast");
+
+    toast.textContent = message;
+    toast.className = "toast show " + (type || "");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(function () {
+        toast.className = "toast " + (type || "");
+    }, 3000);
+
+}
+
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+
+const SCREENS = {
+    home: {
+        id: "homeScreen",
+        title: "🧾 Trip Expense Splitter",
+        subtitle: "Travel, food, sightseeing and hotel costs in one place"
+    },
+    travel: {
+        id: "travelScreen",
+        title: "🚗 Travel",
+        subtitle: "Odometer-based fare split"
+    },
+    food: {
+        id: "foodScreen",
+        title: "🍽️ Food",
+        subtitle: "Bills split between the people who shared them"
+    },
+    sightseeing: {
+        id: "sightseeingScreen",
+        title: "🏞️ Sightseeing",
+        subtitle: "Tickets per visitor plus shared costs"
+    },
+    hotel: {
+        id: "hotelScreen",
+        title: "🏨 Hotel",
+        subtitle: "Room rent split between occupants"
+    },
+    settlement: {
+        id: "settlementScreen",
+        title: "⚖️ Settle up",
+        subtitle: "Who paid, who owes, and who should pay whom"
+    }
+};
+
+
+function showScreen(name) {
+
+    const screen = SCREENS[name] || SCREENS.home;
+
+    document.querySelectorAll(".screen").forEach(function (section) {
+        section.classList.remove("active");
+    });
+
+    document.getElementById(screen.id).classList.add("active");
+
+    document.getElementById("headerTitle").textContent = screen.title;
+    document.getElementById("headerSubtitle").textContent = screen.subtitle;
+
+    document.getElementById("backBtn").style.display =
+        name === "home" ? "none" : "block";
+
+    window.scrollTo(0, 0);
+
+    renderAll();
+
+}
+
+
+document.querySelectorAll("[data-go]").forEach(function (button) {
+
+    button.addEventListener("click", function () {
+        showScreen(this.dataset.go);
+    });
+
+});
+
+
+document.getElementById("backBtn").addEventListener("click", function () {
+    showScreen("home");
+});
+
+
+/* ============================================================
+   RENDER ALL
+============================================================ */
+
+function renderAll() {
+
+    renderMembers();
+    renderTravel();
+    renderFood();
+    renderSightseeing();
+    renderHotel();
+    renderOverall();
+    renderSettlement();
+
+}
+
+
+/* Options list shared by every "paid by" dropdown. */
+
+function paidByOptionsHtml(selectedId) {
+
+    if (data.members.length === 0) {
+
+        return '<option value="">No members added yet</option>';
+
+    }
+
+    return (
+        '<option value="">— Select payer —</option>' +
+        data.members.map(function (member) {
+
+            return `
+                <option value="${member.id}"
+                        ${member.id === selectedId ? "selected" : ""}>
+                    ${escapeHtml(member.name.trim() || "Unnamed")}
+                </option>
+            `;
+
+        }).join("")
+    );
+
+}
+
+
+function paidByHtml(module, entry) {
+
+    return `
+        <div class="paid-by-row">
+            <label>Paid by</label>
+            <select data-entry="${entry.id}" data-field="paidBy">
+                ${paidByOptionsHtml(entry.paidBy)}
+            </select>
+        </div>
+    `;
+
+}
+
+
+/* ============================================================
+   MEMBERS
+============================================================ */
+
+function renderMembers() {
+
+    const tbody = document.getElementById("memberTableBody");
+
+    if (data.members.length === 0) {
+
+        tbody.innerHTML =
+            '<tr class="empty-row"><td colspan="3">' +
+            "No members yet. Add everyone travelling with you." +
+            "</td></tr>";
+
+        return;
+
+    }
+
+    tbody.innerHTML = data.members.map(function (member, index) {
+
+        return `
+            <tr>
+                <td>${index + 1}</td>
+                <td>
+                    <input type="text"
+                           data-member-name="${member.id}"
+                           value="${escapeHtml(member.name)}"
+                           placeholder="Name">
+                </td>
+                <td>
+                    <button class="delete-btn" data-member-delete="${member.id}">
+                        🗑 Remove
+                    </button>
+                </td>
+            </tr>
+        `;
+
+    }).join("");
+
+}
+
+
+document.getElementById("memberTableBody").addEventListener(
+    "input",
+    function (event) {
+
+        const id = event.target.dataset.memberName;
+
+        if (!id) {
+            return;
+        }
+
+        const member = data.members.find(function (m) {
+            return m.id === id;
+        });
+
+        if (member) {
+
+            member.name = event.target.value;
+
+            saveData();
+            renderOverall();
+
+        }
+
+    }
+);
+
+
+document.getElementById("memberTableBody").addEventListener(
+    "click",
+    function (event) {
+
+        const id = event.target.dataset.memberDelete;
+
+        if (!id) {
+            return;
+        }
+
+        const name = memberName(id) || "this member";
+
+        if (!confirm(`Remove ${name} from the trip and from every split?`)) {
+            return;
+        }
+
+        data.members = data.members.filter(function (m) {
+            return m.id !== id;
+        });
+
+        ["food", "sightseeing", "hotel"].forEach(function (key) {
+
+            data[key].entries.forEach(function (entry) {
+
+                entry.people = entry.people.filter(function (pid) {
+                    return pid !== id;
+                });
+
+                if (entry.paidBy === id) {
+                    entry.paidBy = "";
+                }
+
+            });
+
+        });
+
+        if (data.travel.trip.paidBy === id) {
+            data.travel.trip.paidBy = "";
+        }
+
+        saveData();
+        renderAll();
+
+        showToast(`${name} removed.`);
+
+    }
+);
+
+
+document.getElementById("addMemberBtn").addEventListener("click", function () {
+
+    data.members.push({
+        id: uid(),
+        name: ""
+    });
+
+    saveData();
+    renderAll();
+
+    const inputs = document.querySelectorAll("[data-member-name]");
+
+    if (inputs.length) {
+        inputs[inputs.length - 1].focus();
+    }
+
+});
+
+
+/* ============================================================
+   TRAVEL
+============================================================ */
+
+function renderTravel() {
+
+    document.getElementById("totalTripKm").value =
+        data.travel.trip.totalTripKm || 0;
+
+    document.getElementById("ratePerKm").value =
+        data.travel.trip.ratePerKm || 0;
+
+    document.getElementById("tripPaidBy").innerHTML =
+        paidByOptionsHtml(data.travel.trip.paidBy);
+
+    const tbody = document.getElementById("passengerTableBody");
+
+    if (data.travel.passengers.length === 0) {
+
+        tbody.innerHTML =
+            '<tr class="empty-row"><td colspan="7">' +
+            "No passengers yet." +
+            "</td></tr>";
+
+    } else {
+
+        tbody.innerHTML = data.travel.passengers.map(
+            function (passenger, index) {
+
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>
+                            <input type="text"
+                                   data-passenger="${index}"
+                                   data-field="name"
+                                   value="${escapeHtml(passenger.name || "")}"
+                                   placeholder="Passenger name">
+                        </td>
+                        <td>
+                            <input type="number" min="0" step="1"
+                                   data-passenger="${index}"
+                                   data-field="pickup"
+                                   value="${passenger.pickup ?? ""}"
+                                   placeholder="Pickup">
+                        </td>
+                        <td>
+                            <input type="number" min="0" step="1"
+                                   data-passenger="${index}"
+                                   data-field="drop"
+                                   value="${passenger.drop ?? ""}"
+                                   placeholder="Drop">
+                        </td>
+                        <td class="travel-km" id="travel-${index}">0 KM</td>
+                        <td class="fare" id="fare-${index}">₹0</td>
+                        <td>
+                            <button class="delete-btn"
+                                    data-passenger-delete="${index}">
+                                🗑 Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+
+            }
+        ).join("");
+
+    }
+
+    calculateFare();
+
+}
+
+
+function travelBreakdown() {
+
+    const totalTripCost =
+        num(data.travel.trip.totalTripKm) *
+        num(data.travel.trip.ratePerKm);
+
+    const kmList = data.travel.passengers.map(function (passenger) {
+
+        const km = num(passenger.drop) - num(passenger.pickup);
+
+        return km > 0 ? km : 0;
+
+    });
+
+    const totalPassengerKm = kmList.reduce(function (sum, km) {
+        return sum + km;
+    }, 0);
+
+    const fares = kmList.map(function (km) {
+
+        if (totalPassengerKm <= 0) {
+            return 0;
+        }
+
+        return (km / totalPassengerKm) * totalTripCost;
+
+    });
+
+    return {
+        totalTripCost: totalTripCost,
+        totalPassengerKm: totalPassengerKm,
+        kmList: kmList,
+        fares: fares
+    };
+
+}
+
+
+function calculateFare() {
+
+    const result = travelBreakdown();
+
+    result.kmList.forEach(function (km, index) {
+
+        const kmCell = document.getElementById(`travel-${index}`);
+        const fareCell = document.getElementById(`fare-${index}`);
+
+        if (kmCell) {
+            kmCell.textContent = `${formatNumber(km)} KM`;
+        }
+
+        if (fareCell) {
+            fareCell.textContent = formatCurrency(result.fares[index]);
+        }
+
+    });
+
+    document.getElementById("totalTripCost").textContent =
+        formatCurrency(result.totalTripCost);
+
+    document.getElementById("totalPassengerKm").textContent =
+        `${formatNumber(result.totalPassengerKm)} KM`;
+
+    document.getElementById("passengerCount").textContent =
+        data.travel.passengers.length;
+
+    document.getElementById("homeTotalTravel").textContent =
+        formatCurrency(result.totalTripCost);
+
+}
+
+
+document.getElementById("totalTripKm").addEventListener("input", function () {
+
+    data.travel.trip.totalTripKm = num(this.value);
+
+    saveData();
+    calculateFare();
+    renderOverall();
+
+});
+
+
+document.getElementById("ratePerKm").addEventListener("input", function () {
+
+    data.travel.trip.ratePerKm = num(this.value);
+
+    saveData();
+    calculateFare();
+    renderOverall();
+
+});
+
+
+document.getElementById("tripPaidBy").addEventListener("change", function () {
+
+    data.travel.trip.paidBy = this.value;
+
+    saveData();
+    renderSettlement();
+
+});
+
+
+document.getElementById("passengerTableBody").addEventListener(
+    "input",
+    function (event) {
+
+        const index = event.target.dataset.passenger;
+
+        if (index === undefined) {
+            return;
+        }
+
+        const passenger = data.travel.passengers[Number(index)];
+
+        if (!passenger) {
+            return;
+        }
+
+        const field = event.target.dataset.field;
+
+        if (field === "name") {
+            passenger.name = event.target.value;
+        } else {
+            passenger[field] = num(event.target.value);
+        }
+
+        saveData();
+        calculateFare();
+        renderOverall();
+
+    }
+);
+
+
+document.getElementById("passengerTableBody").addEventListener(
+    "click",
+    function (event) {
+
+        const index = event.target.dataset.passengerDelete;
+
+        if (index === undefined) {
+            return;
+        }
+
+        const passenger = data.travel.passengers[Number(index)];
+
+        const name =
+            passenger && passenger.name
+                ? passenger.name
+                : "this passenger";
+
+        if (!confirm(`Delete ${name} from the travel split?`)) {
+            return;
+        }
+
+        data.travel.passengers.splice(Number(index), 1);
+
+        saveData();
+        renderTravel();
+        renderOverall();
+
+        showToast("Passenger deleted.");
+
+    }
+);
+
+
+document.getElementById("addPassengerBtn").addEventListener(
+    "click",
+    function () {
+
+        data.travel.passengers.push({
+            id: uid(),
+            name: "",
+            pickup: 0,
+            drop: 0
+        });
+
+        saveData();
+        renderTravel();
+
+    }
+);
+
+
+document.getElementById("fillFromMembersBtn").addEventListener(
+    "click",
+    function () {
+
+        if (data.members.length === 0) {
+
+            showToast("Add trip members on the home screen first.", "error");
+
+            return;
+
+        }
+
+        let added = 0;
+
+        data.members.forEach(function (member) {
+
+            const name = member.name.trim();
+
+            if (!name) {
+                return;
+            }
+
+            const exists = data.travel.passengers.some(function (p) {
+
+                return (
+                    String(p.name).trim().toLowerCase() ===
+                    name.toLowerCase()
+                );
+
+            });
+
+            if (exists) {
+                return;
+            }
+
+            data.travel.passengers.push({
+                id: uid(),
+                name: name,
+                pickup: 0,
+                drop: 0
+            });
+
+            added += 1;
+
+        });
+
+        saveData();
+        renderTravel();
+
+        showToast(
+            added > 0
+                ? `${added} passenger(s) added.`
+                : "All members are already passengers."
+        );
+
+    }
+);
+
+
+/* ============================================================
+   SHARED ENTRY RENDERING (FOOD / SIGHTSEEING / HOTEL)
+============================================================ */
+
+function chipsHtml(module, entry) {
+
+    if (data.members.length === 0) {
+
+        return (
+            '<div class="card-note" style="margin:0">' +
+            "Add trip members on the home screen to split this." +
+            "</div>"
+        );
+
+    }
+
+    const chips = data.members.map(function (member) {
+
+        const selected = entry.people.indexOf(member.id) !== -1;
+
+        return `
+            <label class="chip ${selected ? "selected" : ""}">
+                <input type="checkbox"
+                       data-module="${module}"
+                       data-entry="${entry.id}"
+                       data-person="${member.id}"
+                       ${selected ? "checked" : ""}>
+                ${escapeHtml(member.name.trim() || "Unnamed")}
+            </label>
+        `;
+
+    }).join("");
+
+    return `
+        <div class="chips">${chips}</div>
+        <div class="chip-actions">
+            <button class="link-btn"
+                    data-select-all="${module}"
+                    data-entry="${entry.id}">
+                Select everyone
+            </button>
+            <button class="link-btn"
+                    data-select-none="${module}"
+                    data-entry="${entry.id}">
+                Clear
+            </button>
+        </div>
+    `;
+
+}
+
+
+/* Returns { total, perPerson: {memberId: amount}, count } for one module. */
+
+function splitModule(module) {
+
+    const perPerson = {};
+    const entryCount = {};
+
+    let total = 0;
+
+    data[module].entries.forEach(function (entry) {
+
+        const people = validMemberIds(entry);
+
+        const amounts = entryAmounts(module, entry, people.length);
+
+        total += amounts.total;
+
+        people.forEach(function (id) {
+
+            perPerson[id] = (perPerson[id] || 0) + amounts.perHead;
+
+            entryCount[id] = (entryCount[id] || 0) + 1;
+
+        });
+
+    });
+
+    return {
+        total: total,
+        perPerson: perPerson,
+        entryCount: entryCount
+    };
+
+}
+
+
+/* Cost rules for each module. */
+
+function entryAmounts(module, entry, headCount) {
+
+    let total = 0;
+
+    if (module === "food") {
+
+        total = num(entry.amount);
+
+    } else if (module === "sightseeing") {
+
+        total = num(entry.pricePerPerson) * headCount + num(entry.extraCost);
+
+    } else if (module === "hotel") {
+
+        total = num(entry.nights) * num(entry.ratePerNight);
+
+    }
+
+    const perHead = headCount > 0 ? total / headCount : 0;
+
+    return {
+        total: total,
+        perHead: perHead
+    };
+
+}
+
+
+function splitTableHtml(module) {
+
+    const split = splitModule(module);
+
+    if (data.members.length === 0) {
+
+        return (
+            '<tr class="empty-row"><td colspan="3">' +
+            "Add trip members to see the split." +
+            "</td></tr>"
+        );
+
+    }
+
+    return data.members.map(function (member) {
+
+        return `
+            <tr>
+                <td>${escapeHtml(member.name.trim() || "Unnamed")}</td>
+                <td>${split.entryCount[member.id] || 0}</td>
+                <td class="amount">
+                    ${formatCurrency(split.perPerson[member.id] || 0)}
+                </td>
+            </tr>
+        `;
+
+    }).join("");
+
+}
+
+
+function peopleInvolved(module) {
+
+    const ids = {};
+
+    data[module].entries.forEach(function (entry) {
+
+        validMemberIds(entry).forEach(function (id) {
+            ids[id] = true;
+        });
+
+    });
+
+    return Object.keys(ids).length;
+
+}
+
+
+/* Checkbox + select-all handling, shared by the three modules. */
+
+function attachEntryListeners(containerId, module) {
+
+    const container = document.getElementById(containerId);
+
+    container.addEventListener("change", function (event) {
+
+        if (event.target.dataset.field === "paidBy") {
+
+            const entry = findEntry(module, event.target.dataset.entry);
+
+            if (entry) {
+
+                entry.paidBy = event.target.value;
+
+                saveData();
+                renderSettlement();
+
+            }
+
+            return;
+
+        }
+
+        const personId = event.target.dataset.person;
+
+        if (!personId) {
+            return;
+        }
+
+        const entry = findEntry(module, event.target.dataset.entry);
+
+        if (!entry) {
+            return;
+        }
+
+        if (event.target.checked) {
+
+            if (entry.people.indexOf(personId) === -1) {
+                entry.people.push(personId);
+            }
+
+        } else {
+
+            entry.people = entry.people.filter(function (id) {
+                return id !== personId;
+            });
+
+        }
+
+        saveData();
+        renderModule(module);
+        renderOverall();
+
+    });
+
+
+    container.addEventListener("input", function (event) {
+
+        const field = event.target.dataset.field;
+
+        if (!field) {
+            return;
+        }
+
+        const entry = findEntry(module, event.target.dataset.entry);
+
+        if (!entry) {
+            return;
+        }
+
+        if (field === "label") {
+            entry.label = event.target.value;
+        } else {
+            entry[field] = num(event.target.value);
+        }
+
+        saveData();
+        refreshModuleTotals(module);
+
+    });
+
+
+    container.addEventListener("click", function (event) {
+
+        const target = event.target;
+
+        const entryId =
+            target.dataset.entry ||
+            target.dataset.entryDelete;
+
+        if (target.dataset.selectAll) {
+
+            const entry = findEntry(module, entryId);
+
+            entry.people = data.members.map(function (m) {
+                return m.id;
+            });
+
+            saveData();
+            renderModule(module);
+            renderOverall();
+
+            return;
+
+        }
+
+        if (target.dataset.selectNone) {
+
+            const entry = findEntry(module, entryId);
+
+            entry.people = [];
+
+            saveData();
+            renderModule(module);
+            renderOverall();
+
+            return;
+
+        }
+
+        if (target.dataset.entryDelete) {
+
+            if (!confirm("Delete this entry?")) {
+                return;
+            }
+
+            data[module].entries = data[module].entries.filter(
+                function (entry) {
+                    return entry.id !== target.dataset.entryDelete;
+                }
+            );
+
+            saveData();
+            renderModule(module);
+            renderOverall();
+
+            showToast("Entry deleted.");
 
         }
 
     });
 
-
-    /* ============================================================
-       LOGOUT
-    ============================================================ */
-
-    document
-        .getElementById("logoutBtn")
-        .addEventListener("click", function () {
-
-            const confirmed = confirm(
-                "Are you sure you want to logout?"
-            );
-
-            if (confirmed) {
-
-                app.style.display = "none";
-                loginPage.style.display = "flex";
-
-                document
-                    .getElementById("password")
-                    .value = "";
-
-            }
-
-        });
+}
 
 
-    /* ============================================================
-       DATA
-    ============================================================ */
+function findEntry(module, id) {
 
-    let tripData = {
-        trip: {
-            totalTripKm: 0,
-            ratePerKm: 0
-        },
-        passengers: []
-    };
+    return data[module].entries.find(function (entry) {
+        return entry.id === id;
+    });
+
+}
 
 
-    /* ============================================================
-       LOAD JSON
-    ============================================================ */
+function renderModule(module) {
 
-    async function loadTripData() {
+    if (module === "food") {
+        renderFood();
+    } else if (module === "sightseeing") {
+        renderSightseeing();
+    } else {
+        renderHotel();
+    }
 
-        try {
+}
 
-            showStatus(
-                "Loading trip data...",
-                "info"
-            );
 
-            const response =
-                await fetch("trip-data.json", {
-                    cache: "no-store"
-                });
+/* Updates only the numbers, so typing never loses focus. */
 
-            if (!response.ok) {
-                throw new Error(
-                    "Could not load trip-data.json"
-                );
-            }
+function refreshModuleTotals(module) {
 
-            const data = await response.json();
+    data[module].entries.forEach(function (entry) {
 
-            validateTripData(data);
+        const people = validMemberIds(entry);
 
-            tripData = data;
+        const amounts = entryAmounts(module, entry, people.length);
 
-            renderTrip();
+        const resultBox = document.getElementById(`result-${entry.id}`);
 
-            showStatus(
-                "Trip data loaded successfully.",
-                "success"
-            );
-
-        } catch (error) {
-
-            console.error(error);
-
-            showStatus(
-                "Could not load trip-data.json. Make sure index.html and trip-data.json are in the same folder and run the project using a local web server.",
-                "error"
-            );
-
+        if (resultBox) {
+            resultBox.innerHTML = resultText(amounts, people);
         }
+
+    });
+
+    if (module === "food") {
+
+        renderFoodTotals();
+
+    } else if (module === "sightseeing") {
+
+        renderSightTotals();
+
+    } else {
+
+        renderHotelTotals();
 
     }
 
+    renderOverall();
 
-    /* ============================================================
-       VALIDATE JSON
-    ============================================================ */
+}
 
-    function validateTripData(data) {
 
-        if (!data || typeof data !== "object") {
-            throw new Error("Invalid JSON data.");
-        }
+function resultText(amounts, people) {
 
-        if (!data.trip || typeof data.trip !== "object") {
-            throw new Error("Trip section is missing.");
-        }
+    if (people.length === 0) {
 
-        if (!Array.isArray(data.passengers)) {
-            throw new Error("Passengers section is invalid.");
-        }
+        return (
+            "Total <b>" + formatCurrency(amounts.total) + "</b> — " +
+            "tick who shared this to split it."
+        );
 
     }
 
+    return (
+        "Total <b>" + formatCurrency(amounts.total) + "</b> ÷ " +
+        people.length + " = <b>" + formatCurrency(amounts.perHead) +
+        "</b> each (" +
+        people.map(function (id) {
+            return escapeHtml(memberName(id));
+        }).join(", ") +
+        ")"
+    );
 
-    /* ============================================================
-       RENDER
-    ============================================================ */
-
-    function renderTrip() {
-
-        document.getElementById("totalTripKm").value =
-            tripData.trip.totalTripKm ?? 0;
-
-        document.getElementById("ratePerKm").value =
-            tripData.trip.ratePerKm ?? 0;
-
-        renderPassengers();
-
-        calculateFare();
-
-    }
+}
 
 
-    /* ============================================================
-       RENDER PASSENGERS
-    ============================================================ */
+/* ============================================================
+   FOOD
+============================================================ */
 
-    function renderPassengers() {
+function renderFood() {
 
-        const tbody =
-            document.getElementById("passengerTableBody");
+    const container = document.getElementById("foodEntries");
 
-        tbody.innerHTML = "";
+    if (data.food.entries.length === 0) {
 
-        tripData.passengers.forEach(
-            function (passenger, index) {
+        container.innerHTML =
+            '<div class="card-note" style="margin:0">' +
+            "No bills yet." +
+            "</div>";
 
-                const row =
-                    document.createElement("tr");
+    } else {
 
-                row.innerHTML = `
+        container.innerHTML = data.food.entries.map(
+            function (entry, index) {
 
-                    <td>
-                        ${index + 1}
-                    </td>
+                const people = validMemberIds(entry);
 
-                    <td>
-                        <input
-                            type="text"
-                            class="passenger-name"
-                            data-index="${index}"
-                            value="${escapeHtml(passenger.name || "")}"
-                            placeholder="Passenger name"
-                        >
-                    </td>
+                const amounts = entryAmounts("food", entry, people.length);
 
-                    <td>
-                        <input
-                            type="number"
-                            class="pickup-odometer"
-                            data-index="${index}"
-                            value="${passenger.pickup ?? ""}"
-                            min="0"
-                            step="1"
-                            placeholder="Pickup"
-                        >
-                    </td>
+                return `
+                    <div class="entry">
 
-                    <td>
-                        <input
-                            type="number"
-                            class="drop-odometer"
-                            data-index="${index}"
-                            value="${passenger.drop ?? ""}"
-                            min="0"
-                            step="1"
-                            placeholder="Drop"
-                        >
-                    </td>
+                        <div class="entry-head">
+                            <div class="entry-index">Bill ${index + 1}</div>
+                            <button class="delete-btn"
+                                    data-entry-delete="${entry.id}">
+                                🗑 Delete
+                            </button>
+                        </div>
 
-                    <td class="travel-km" id="travel-${index}">
-                        0 KM
-                    </td>
+                        <div class="entry-fields">
 
-                    <td class="fare" id="fare-${index}">
-                        ₹0
-                    </td>
+                            <div>
+                                <label>What was it</label>
+                                <input type="text"
+                                       data-entry="${entry.id}"
+                                       data-field="label"
+                                       value="${escapeHtml(entry.label)}"
+                                       placeholder="Lunch at Rajwadu">
+                            </div>
 
-                    <td>
-                        <button
-                            class="delete-btn"
-                            data-index="${index}"
-                        >
-                            🗑 Delete
-                        </button>
-                    </td>
+                            <div>
+                                <label>Total amount (₹)</label>
+                                <input type="number" min="0" step="0.01"
+                                       data-entry="${entry.id}"
+                                       data-field="amount"
+                                       value="${entry.amount || ""}"
+                                       placeholder="0">
+                            </div>
 
+                        </div>
+
+                        ${paidByHtml("food", entry)}
+
+                        <div class="people-label">Who shared this</div>
+
+                        ${chipsHtml("food", entry)}
+
+                        <div class="entry-result" id="result-${entry.id}">
+                            ${resultText(amounts, people)}
+                        </div>
+
+                    </div>
                 `;
 
-                tbody.appendChild(row);
-
             }
-        );
-
-        attachPassengerEvents();
+        ).join("");
 
     }
 
+    document.getElementById("foodSplitBody").innerHTML =
+        splitTableHtml("food");
 
-    /* ============================================================
-       PASSENGER EVENTS
-    ============================================================ */
+    renderFoodTotals();
 
-    function attachPassengerEvents() {
+}
 
-        document
-            .querySelectorAll(".passenger-name")
-            .forEach(function (input) {
 
-                input.addEventListener(
-                    "input",
-                    function () {
+function renderFoodTotals() {
 
-                        const index =
-                            Number(this.dataset.index);
+    const split = splitModule("food");
 
-                        tripData.passengers[index].name =
-                            this.value;
+    document.getElementById("foodTotalCost").textContent =
+        formatCurrency(split.total);
 
-                    }
+    document.getElementById("foodEntryCount").textContent =
+        data.food.entries.length;
+
+    document.getElementById("foodPeopleCount").textContent =
+        peopleInvolved("food");
+
+    document.getElementById("homeTotalFood").textContent =
+        formatCurrency(split.total);
+
+    document.getElementById("foodSplitBody").innerHTML =
+        splitTableHtml("food");
+
+}
+
+
+document.getElementById("addFoodBtn").addEventListener("click", function () {
+
+    data.food.entries.push({
+        id: uid(),
+        label: "",
+        amount: 0,
+        pricePerPerson: 0,
+        extraCost: 0,
+        nights: 0,
+        ratePerNight: 0,
+        paidBy: "",
+        people: data.members.map(function (m) {
+            return m.id;
+        })
+    });
+
+    saveData();
+    renderFood();
+    renderOverall();
+
+});
+
+
+attachEntryListeners("foodEntries", "food");
+
+
+/* ============================================================
+   SIGHTSEEING
+============================================================ */
+
+function renderSightseeing() {
+
+    const container = document.getElementById("sightEntries");
+
+    if (data.sightseeing.entries.length === 0) {
+
+        container.innerHTML =
+            '<div class="card-note" style="margin:0">' +
+            "No places yet." +
+            "</div>";
+
+    } else {
+
+        container.innerHTML = data.sightseeing.entries.map(
+            function (entry, index) {
+
+                const people = validMemberIds(entry);
+
+                const amounts = entryAmounts(
+                    "sightseeing",
+                    entry,
+                    people.length
                 );
 
-            });
+                return `
+                    <div class="entry">
 
+                        <div class="entry-head">
+                            <div class="entry-index">Place ${index + 1}</div>
+                            <button class="delete-btn"
+                                    data-entry-delete="${entry.id}">
+                                🗑 Delete
+                            </button>
+                        </div>
 
-        document
-            .querySelectorAll(".pickup-odometer")
-            .forEach(function (input) {
+                        <div class="entry-fields">
 
-                input.addEventListener(
-                    "input",
-                    function () {
+                            <div>
+                                <label>Place</label>
+                                <input type="text"
+                                       data-entry="${entry.id}"
+                                       data-field="label"
+                                       value="${escapeHtml(entry.label)}"
+                                       placeholder="Sabarmati Ashram">
+                            </div>
 
-                        const index =
-                            Number(this.dataset.index);
+                            <div>
+                                <label>Ticket per person (₹)</label>
+                                <input type="number" min="0" step="0.01"
+                                       data-entry="${entry.id}"
+                                       data-field="pricePerPerson"
+                                       value="${entry.pricePerPerson || ""}"
+                                       placeholder="0">
+                            </div>
 
-                        tripData.passengers[index].pickup =
-                            Number(this.value) || 0;
+                            <div>
+                                <label>Other shared cost (₹)</label>
+                                <input type="number" min="0" step="0.01"
+                                       data-entry="${entry.id}"
+                                       data-field="extraCost"
+                                       value="${entry.extraCost || ""}"
+                                       placeholder="Guide, parking">
+                            </div>
 
-                        calculateFare();
+                        </div>
 
-                    }
-                );
+                        ${paidByHtml("sightseeing", entry)}
 
-            });
+                        <div class="people-label">Who visited</div>
 
+                        ${chipsHtml("sightseeing", entry)}
 
-        document
-            .querySelectorAll(".drop-odometer")
-            .forEach(function (input) {
+                        <div class="entry-result" id="result-${entry.id}">
+                            ${resultText(amounts, people)}
+                        </div>
 
-                input.addEventListener(
-                    "input",
-                    function () {
+                    </div>
+                `;
 
-                        const index =
-                            Number(this.dataset.index);
-
-                        tripData.passengers[index].drop =
-                            Number(this.value) || 0;
-
-                        calculateFare();
-
-                    }
-                );
-
-            });
-
-
-        document
-            .querySelectorAll(".delete-btn")
-            .forEach(function (button) {
-
-                button.addEventListener(
-                    "click",
-                    function () {
-
-                        const index =
-                            Number(this.dataset.index);
-
-                        deletePassenger(index);
-
-                    }
-                );
-
-            });
+            }
+        ).join("");
 
     }
 
+    renderSightTotals();
 
-    /* ============================================================
-       CALCULATE FARE
-    ============================================================ */
-
-    function calculateFare() {
-
-        const totalTripKm =
-            Number(
-                document.getElementById(
-                    "totalTripKm"
-                ).value
-            ) || 0;
-
-        const ratePerKm =
-            Number(
-                document.getElementById(
-                    "ratePerKm"
-                ).value
-            ) || 0;
-
-        const totalTripCost =
-            totalTripKm * ratePerKm;
+}
 
 
-        let totalPassengerKm = 0;
+function renderSightTotals() {
 
-        const passengerKmList = [];
+    const split = splitModule("sightseeing");
+
+    document.getElementById("sightTotalCost").textContent =
+        formatCurrency(split.total);
+
+    document.getElementById("sightEntryCount").textContent =
+        data.sightseeing.entries.length;
+
+    document.getElementById("sightPeopleCount").textContent =
+        peopleInvolved("sightseeing");
+
+    document.getElementById("homeTotalSight").textContent =
+        formatCurrency(split.total);
+
+    document.getElementById("sightSplitBody").innerHTML =
+        splitTableHtml("sightseeing");
+
+}
 
 
-        tripData.passengers.forEach(
-            function (passenger) {
+document.getElementById("addSightBtn").addEventListener("click", function () {
 
-                const pickup =
-                    Number(passenger.pickup) || 0;
+    data.sightseeing.entries.push({
+        id: uid(),
+        label: "",
+        amount: 0,
+        pricePerPerson: 0,
+        extraCost: 0,
+        nights: 0,
+        ratePerNight: 0,
+        paidBy: "",
+        people: data.members.map(function (m) {
+            return m.id;
+        })
+    });
 
-                const drop =
-                    Number(passenger.drop) || 0;
+    saveData();
+    renderSightseeing();
+    renderOverall();
 
-                let travelKm =
-                    drop - pickup;
+});
 
-                if (travelKm < 0) {
-                    travelKm = 0;
-                }
 
-                passengerKmList.push(travelKm);
+attachEntryListeners("sightEntries", "sightseeing");
 
-                totalPassengerKm += travelKm;
+
+/* ============================================================
+   HOTEL
+============================================================ */
+
+function renderHotel() {
+
+    const container = document.getElementById("hotelEntries");
+
+    if (data.hotel.entries.length === 0) {
+
+        container.innerHTML =
+            '<div class="card-note" style="margin:0">' +
+            "No rooms yet." +
+            "</div>";
+
+    } else {
+
+        container.innerHTML = data.hotel.entries.map(
+            function (entry, index) {
+
+                const people = validMemberIds(entry);
+
+                const amounts = entryAmounts("hotel", entry, people.length);
+
+                return `
+                    <div class="entry">
+
+                        <div class="entry-head">
+                            <div class="entry-index">Room ${index + 1}</div>
+                            <button class="delete-btn"
+                                    data-entry-delete="${entry.id}">
+                                🗑 Delete
+                            </button>
+                        </div>
+
+                        <div class="entry-fields">
+
+                            <div>
+                                <label>Hotel / room</label>
+                                <input type="text"
+                                       data-entry="${entry.id}"
+                                       data-field="label"
+                                       value="${escapeHtml(entry.label)}"
+                                       placeholder="Hotel Sarovar — Room 204">
+                            </div>
+
+                            <div>
+                                <label>Nights</label>
+                                <input type="number" min="0" step="1"
+                                       data-entry="${entry.id}"
+                                       data-field="nights"
+                                       value="${entry.nights || ""}"
+                                       placeholder="0">
+                            </div>
+
+                            <div>
+                                <label>Rent per night (₹)</label>
+                                <input type="number" min="0" step="0.01"
+                                       data-entry="${entry.id}"
+                                       data-field="ratePerNight"
+                                       value="${entry.ratePerNight || ""}"
+                                       placeholder="0">
+                            </div>
+
+                        </div>
+
+                        ${paidByHtml("hotel", entry)}
+
+                        <div class="people-label">Who stayed in this room</div>
+
+                        ${chipsHtml("hotel", entry)}
+
+                        <div class="entry-result" id="result-${entry.id}">
+                            ${resultText(amounts, people)}
+                        </div>
+
+                    </div>
+                `;
 
             }
-        );
-
-
-        tripData.passengers.forEach(
-            function (passenger, index) {
-
-                const travelKm =
-                    passengerKmList[index];
-
-                let fare = 0;
-
-                if (totalPassengerKm > 0) {
-
-                    fare =
-                        (
-                            travelKm /
-                            totalPassengerKm
-                        ) * totalTripCost;
-
-                }
-
-                const travelElement =
-                    document.getElementById(
-                        `travel-${index}`
-                    );
-
-                const fareElement =
-                    document.getElementById(
-                        `fare-${index}`
-                    );
-
-
-                if (travelElement) {
-
-                    travelElement.textContent =
-                        `${formatNumber(travelKm)} KM`;
-
-                }
-
-
-                if (fareElement) {
-
-                    fareElement.textContent =
-                        formatCurrency(fare);
-
-                }
-
-            }
-        );
-
-
-        document.getElementById(
-            "totalTripCost"
-        ).textContent =
-            formatCurrency(totalTripCost);
-
-
-        document.getElementById(
-            "totalPassengerKm"
-        ).textContent =
-            `${formatNumber(totalPassengerKm)} KM`;
-
-
-        document.getElementById(
-            "passengerCount"
-        ).textContent =
-            tripData.passengers.length;
+        ).join("");
 
     }
 
+    renderHotelTotals();
 
-    /* ============================================================
-       TRIP SETTINGS EVENTS
-    ============================================================ */
-
-    document
-        .getElementById("totalTripKm")
-        .addEventListener(
-            "input",
-            function () {
-
-                tripData.trip.totalTripKm =
-                    Number(this.value) || 0;
-
-                calculateFare();
-
-            }
-        );
+}
 
 
-    document
-        .getElementById("ratePerKm")
-        .addEventListener(
-            "input",
-            function () {
+function renderHotelTotals() {
 
-                tripData.trip.ratePerKm =
-                    Number(this.value) || 0;
+    const split = splitModule("hotel");
 
-                calculateFare();
+    document.getElementById("hotelTotalCost").textContent =
+        formatCurrency(split.total);
 
-            }
-        );
+    document.getElementById("hotelEntryCount").textContent =
+        data.hotel.entries.length;
 
+    document.getElementById("hotelPeopleCount").textContent =
+        peopleInvolved("hotel");
 
-    /* ============================================================
-       ADD PASSENGER
-    ============================================================ */
+    document.getElementById("homeTotalHotel").textContent =
+        formatCurrency(split.total);
 
-    document
-        .getElementById("addPassengerBtn")
-        .addEventListener(
-            "click",
-            function () {
+    document.getElementById("hotelSplitBody").innerHTML =
+        splitTableHtml("hotel");
 
-                tripData.passengers.push({
-
-                    id: getNextPassengerId(),
-
-                    name: "",
-
-                    pickup: 0,
-
-                    drop: 0
-
-                });
-
-                renderPassengers();
-
-                calculateFare();
-
-                showStatus(
-                    "New passenger added. Export JSON to save the change.",
-                    "info"
-                );
-
-            }
-        );
+}
 
 
-    /* ============================================================
-       DELETE PASSENGER
-    ============================================================ */
+document.getElementById("addHotelBtn").addEventListener("click", function () {
 
-    function deletePassenger(index) {
+    data.hotel.entries.push({
+        id: uid(),
+        label: "",
+        amount: 0,
+        pricePerPerson: 0,
+        extraCost: 0,
+        nights: 0,
+        ratePerNight: 0,
+        paidBy: "",
+        people: data.members.map(function (m) {
+            return m.id;
+        })
+    });
 
-        const passenger =
-            tripData.passengers[index];
+    saveData();
+    renderHotel();
+    renderOverall();
 
-        const passengerName =
-            passenger &&
-            passenger.name
-                ? passenger.name
-                : "this passenger";
+});
 
 
-        const confirmed =
-            confirm(
-                `Are you sure you want to delete ${passengerName}?\n\nThis action will remove the passenger from the current data.`
-            );
+attachEntryListeners("hotelEntries", "hotel");
 
 
-        if (!confirmed) {
+/* ============================================================
+   OVERALL SPLIT
+============================================================ */
+
+function renderOverall() {
+
+    const tbody = document.getElementById("overallTableBody");
+
+    const food = splitModule("food");
+    const sight = splitModule("sightseeing");
+    const hotel = splitModule("hotel");
+
+    const travel = travelBreakdown();
+
+    /* Travel rows are matched to members by name. */
+
+    const travelByName = {};
+
+    data.travel.passengers.forEach(function (passenger, index) {
+
+        const key = String(passenger.name || "").trim().toLowerCase();
+
+        if (!key) {
             return;
         }
 
+        travelByName[key] = (travelByName[key] || 0) + travel.fares[index];
 
-        tripData.passengers.splice(index, 1);
+    });
 
-        renderPassengers();
+    const rows = [];
 
-        calculateFare();
+    let grandTotal = 0;
 
+    data.members.forEach(function (member) {
 
-        showStatus(
-            "Passenger deleted. Export JSON if you want to save this change.",
-            "info"
-        );
+        const key = member.name.trim().toLowerCase();
 
-    }
+        const travelAmount = key ? travelByName[key] || 0 : 0;
 
-
-    /* ============================================================
-       NEXT ID
-    ============================================================ */
-
-    function getNextPassengerId() {
-
-        if (tripData.passengers.length === 0) {
-            return 1;
+        if (key) {
+            delete travelByName[key];
         }
 
-        return (
-            Math.max(
-                ...tripData.passengers.map(
-                    function (passenger) {
+        const foodAmount = food.perPerson[member.id] || 0;
+        const sightAmount = sight.perPerson[member.id] || 0;
+        const hotelAmount = hotel.perPerson[member.id] || 0;
 
-                        return Number(
-                            passenger.id
-                        ) || 0;
+        const total =
+            travelAmount + foodAmount + sightAmount + hotelAmount;
 
-                    }
-                )
-            ) + 1
-        );
+        grandTotal += total;
+
+        rows.push({
+            name: member.name.trim() || "Unnamed",
+            travel: travelAmount,
+            food: foodAmount,
+            sight: sightAmount,
+            hotel: hotelAmount,
+            total: total
+        });
+
+    });
+
+    /* Passengers who are not in the member list still get a row. */
+
+    data.travel.passengers.forEach(function (passenger, index) {
+
+        const key = String(passenger.name || "").trim().toLowerCase();
+
+        if (!key || travelByName[key] === undefined) {
+            return;
+        }
+
+        const amount = travelByName[key];
+
+        delete travelByName[key];
+
+        grandTotal += amount;
+
+        rows.push({
+            name: passenger.name.trim(),
+            travel: amount,
+            food: 0,
+            sight: 0,
+            hotel: 0,
+            total: amount
+        });
+
+    });
+
+    if (rows.length === 0) {
+
+        tbody.innerHTML =
+            '<tr class="empty-row"><td colspan="6">' +
+            "Nothing to split yet. Add members and expenses." +
+            "</td></tr>";
+
+        return;
 
     }
 
+    tbody.innerHTML =
+        rows.map(function (row) {
 
-    /* ============================================================
-       EXPORT JSON
-    ============================================================ */
+            return `
+                <tr>
+                    <td>${escapeHtml(row.name)}</td>
+                    <td>${formatCurrency(row.travel)}</td>
+                    <td>${formatCurrency(row.food)}</td>
+                    <td>${formatCurrency(row.sight)}</td>
+                    <td>${formatCurrency(row.hotel)}</td>
+                    <td class="amount">${formatCurrency(row.total)}</td>
+                </tr>
+            `;
 
-    document
-        .getElementById("exportBtn")
-        .addEventListener(
-            "click",
-            function () {
+        }).join("") +
+        `
+            <tr>
+                <td><b>Grand total</b></td>
+                <td colspan="4"></td>
+                <td class="amount">${formatCurrency(grandTotal)}</td>
+            </tr>
+        `;
 
-                updateDataFromScreen();
-
-
-                const json =
-                    JSON.stringify(
-                        tripData,
-                        null,
-                        4
-                    );
-
-
-                const blob =
-                    new Blob(
-                        [json],
-                        {
-                            type: "application/json"
-                        }
-                    );
+}
 
 
-                const url =
-                    URL.createObjectURL(blob);
+/* ============================================================
+   SETTLEMENT
+
+   For every person: what they actually paid out of pocket
+   (paidBy) versus what they actually owe (their share of only
+   the entries they were part of). The difference is what they
+   need to pay, or should receive, to settle up.
+============================================================ */
+
+function validPaidBy(id) {
+
+    if (!id) {
+        return "";
+    }
+
+    const exists = data.members.some(function (m) {
+        return m.id === id;
+    });
+
+    return exists ? id : "";
+
+}
 
 
-                const link =
-                    document.createElement("a");
+function computeSettlement() {
 
-                link.href = url;
+    const paid = {};
+    const owed = {};
 
-                link.download =
-                    "trip-data.json";
+    function addPaid(id, amount) {
 
-                document.body.appendChild(link);
+        const validId = validPaidBy(id);
 
-                link.click();
+        if (!validId || !amount) {
+            return;
+        }
 
-                document.body.removeChild(link);
+        paid[validId] = (paid[validId] || 0) + amount;
 
-                URL.revokeObjectURL(url);
+    }
+
+    function addOwed(id, amount) {
+
+        if (!amount) {
+            return;
+        }
+
+        owed[id] = (owed[id] || 0) + amount;
+
+    }
+
+    /* Travel: the whole trip cost was paid by one person, and
+       every passenger owes their odometer-based share of it. */
+
+    const travel = travelBreakdown();
+
+    addPaid(data.travel.trip.paidBy, travel.totalTripCost);
+
+    const travelByName = {};
+
+    data.travel.passengers.forEach(function (passenger, index) {
+
+        const key = String(passenger.name || "").trim().toLowerCase();
+
+        if (!key) {
+            return;
+        }
+
+        travelByName[key] = (travelByName[key] || 0) + travel.fares[index];
+
+    });
+
+    data.members.forEach(function (member) {
+
+        const key = member.name.trim().toLowerCase();
+
+        if (key && travelByName[key] !== undefined) {
+
+            addOwed(member.id, travelByName[key]);
+
+            delete travelByName[key];
+
+        }
+
+    });
+
+    /* Food, sightseeing, hotel: each entry was paid by one
+       person, and only the people ticked on that entry owe
+       their per-head share of it. */
+
+    ["food", "sightseeing", "hotel"].forEach(function (module) {
+
+        data[module].entries.forEach(function (entry) {
+
+            const people = validMemberIds(entry);
+
+            const amounts = entryAmounts(module, entry, people.length);
+
+            addPaid(entry.paidBy, amounts.total);
+
+            people.forEach(function (id) {
+                addOwed(id, amounts.perHead);
+            });
+
+        });
+
+    });
+
+    const rows = data.members.map(function (member) {
+
+        const memberPaid = paid[member.id] || 0;
+        const memberOwed = owed[member.id] || 0;
+
+        return {
+            id: member.id,
+            name: member.name.trim() || "Unnamed",
+            paid: memberPaid,
+            owed: memberOwed,
+            net: memberPaid - memberOwed
+        };
+
+    });
+
+    /* Travel passengers who never made it onto the members list
+       still owe their share, but can never be a payer here. */
+
+    Object.keys(travelByName).forEach(function (key) {
+
+        const amount = travelByName[key];
+
+        if (!amount) {
+            return;
+        }
+
+        const passenger = data.travel.passengers.find(function (p) {
+            return String(p.name || "").trim().toLowerCase() === key;
+        });
+
+        rows.push({
+            id: null,
+            name: passenger ? passenger.name.trim() : key,
+            paid: 0,
+            owed: amount,
+            net: -amount
+        });
+
+    });
+
+    return rows;
+
+}
 
 
-                showStatus(
-                    "Updated trip-data.json exported successfully.",
+/* Greedy debt simplification: match the biggest debtor against
+   the biggest creditor until everyone nets to zero. This gives
+   the minimum number of payments to settle the trip. */
+
+function computeSettlementTransactions(rows) {
+
+    const EPS = 0.01;
+
+    const creditors = rows
+        .filter(function (r) { return r.net > EPS; })
+        .map(function (r) { return { name: r.name, amount: r.net }; })
+        .sort(function (a, b) { return b.amount - a.amount; });
+
+    const debtors = rows
+        .filter(function (r) { return r.net < -EPS; })
+        .map(function (r) { return { name: r.name, amount: -r.net }; })
+        .sort(function (a, b) { return b.amount - a.amount; });
+
+    const transactions = [];
+
+    let i = 0;
+    let j = 0;
+
+    while (i < debtors.length && j < creditors.length) {
+
+        const amount = Math.min(debtors[i].amount, creditors[j].amount);
+
+        if (amount > EPS) {
+
+            transactions.push({
+                from: debtors[i].name,
+                to: creditors[j].name,
+                amount: amount
+            });
+
+        }
+
+        debtors[i].amount -= amount;
+        creditors[j].amount -= amount;
+
+        if (debtors[i].amount <= EPS) {
+            i += 1;
+        }
+
+        if (creditors[j].amount <= EPS) {
+            j += 1;
+        }
+
+    }
+
+    return transactions;
+
+}
+
+
+function renderSettlement() {
+
+    const rows = computeSettlement();
+
+    const tbody = document.getElementById("settlementTableBody");
+
+    if (rows.length === 0) {
+
+        tbody.innerHTML =
+            '<tr class="empty-row"><td colspan="4">' +
+            "Add members and expenses to see the settlement." +
+            "</td></tr>";
+
+    } else {
+
+        tbody.innerHTML = rows.map(function (row) {
+
+            let balanceClass = "";
+            let balanceLabel = "Settled";
+
+            if (row.net > 0.01) {
+                balanceClass = "balance-positive";
+                balanceLabel = `Gets back ${formatCurrency(row.net)}`;
+            } else if (row.net < -0.01) {
+                balanceClass = "balance-negative";
+                balanceLabel = `Owes ${formatCurrency(-row.net)}`;
+            }
+
+            return `
+                <tr>
+                    <td>${escapeHtml(row.name)}</td>
+                    <td>${formatCurrency(row.paid)}</td>
+                    <td>${formatCurrency(row.owed)}</td>
+                    <td class="${balanceClass}">${balanceLabel}</td>
+                </tr>
+            `;
+
+        }).join("");
+
+    }
+
+    const transactions = computeSettlementTransactions(rows);
+
+    const txContainer = document.getElementById("settlementTransactions");
+
+    if (transactions.length === 0) {
+
+        txContainer.innerHTML =
+            '<div class="card-note" style="margin:0">' +
+            "Everyone is settled up." +
+            "</div>";
+
+    } else {
+
+        txContainer.innerHTML = transactions.map(function (tx) {
+
+            return `
+                <div class="settle-tx">
+                    <span>
+                        <b>${escapeHtml(tx.from)}</b> pays
+                        <b>${escapeHtml(tx.to)}</b>
+                    </span>
+                    <span class="amount">${formatCurrency(tx.amount)}</span>
+                </div>
+            `;
+
+        }).join("");
+
+    }
+
+    const totalPaid = rows.reduce(function (sum, row) {
+        return sum + row.paid;
+    }, 0);
+
+    document.getElementById("settleTotalPaid").textContent =
+        formatCurrency(totalPaid);
+
+    document.getElementById("settleTxCount").textContent =
+        transactions.length;
+
+}
+
+
+/* ============================================================
+   EXPORT / IMPORT / RESET
+============================================================ */
+
+document.getElementById("exportBtn").addEventListener("click", function () {
+
+    const blob = new Blob(
+        [JSON.stringify(data, null, 4)],
+        { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "trip-data.json";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    showToast("Backup downloaded.", "success");
+
+});
+
+
+document.getElementById("importBtn").addEventListener("click", function () {
+
+    document.getElementById("importFile").click();
+
+});
+
+
+document.getElementById("importFile").addEventListener(
+    "change",
+    function (event) {
+
+        const file = event.target.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        if (!confirm(
+            "Importing replaces everything currently loaded for this trip.\n\nContinue?"
+        )) {
+
+            event.target.value = "";
+
+            return;
+
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+
+            try {
+
+                data = normalise(JSON.parse(e.target.result));
+
+                renderAll();
+                setSyncStatus("pending");
+
+                showToast(
+                    "Backup imported. Press Save to write it to Firestore.",
                     "success"
                 );
 
-            }
-        );
+            } catch (error) {
 
+                console.error(error);
 
-    /* ============================================================
-       UPDATE DATA BEFORE EXPORT
-    ============================================================ */
-
-    function updateDataFromScreen() {
-
-        tripData.trip.totalTripKm =
-            Number(
-                document.getElementById(
-                    "totalTripKm"
-                ).value
-            ) || 0;
-
-
-        tripData.trip.ratePerKm =
-            Number(
-                document.getElementById(
-                    "ratePerKm"
-                ).value
-            ) || 0;
-
-
-        document
-            .querySelectorAll(".passenger-name")
-            .forEach(function (input) {
-
-                const index =
-                    Number(input.dataset.index);
-
-                if (tripData.passengers[index]) {
-
-                    tripData.passengers[index].name =
-                        input.value.trim();
-
-                }
-
-            });
-
-
-        document
-            .querySelectorAll(".pickup-odometer")
-            .forEach(function (input) {
-
-                const index =
-                    Number(input.dataset.index);
-
-                if (tripData.passengers[index]) {
-
-                    tripData.passengers[index].pickup =
-                        Number(input.value) || 0;
-
-                }
-
-            });
-
-
-        document
-            .querySelectorAll(".drop-odometer")
-            .forEach(function (input) {
-
-                const index =
-                    Number(input.dataset.index);
-
-                if (tripData.passengers[index]) {
-
-                    tripData.passengers[index].drop =
-                        Number(input.value) || 0;
-
-                }
-
-            });
-
-    }
-
-
-    /* ============================================================
-       IMPORT JSON
-    ============================================================ */
-
-    document
-        .getElementById("importBtn")
-        .addEventListener(
-            "click",
-            function () {
-
-                document
-                    .getElementById("importFile")
-                    .click();
+                showToast("That file is not a valid backup.", "error");
 
             }
-        );
 
+            event.target.value = "";
 
-    document
-        .getElementById("importFile")
-        .addEventListener(
-            "change",
-            function (event) {
+        };
 
-                const file =
-                    event.target.files[0];
-
-                if (!file) {
-                    return;
-                }
-
-
-                const confirmed =
-                    confirm(
-                        "Importing this JSON will replace the current trip details in the app.\n\nDo you want to continue?"
-                    );
-
-
-                if (!confirmed) {
-
-                    event.target.value = "";
-
-                    return;
-
-                }
-
-
-                const reader =
-                    new FileReader();
-
-
-                reader.onload =
-                    function (e) {
-
-                        try {
-
-                            const importedData =
-                                JSON.parse(
-                                    e.target.result
-                                );
-
-
-                            validateTripData(
-                                importedData
-                            );
-
-
-                            tripData =
-                                importedData;
-
-
-                            renderTrip();
-
-
-                            showStatus(
-                                "JSON imported successfully.",
-                                "success"
-                            );
-
-
-                        } catch (error) {
-
-                            console.error(error);
-
-                            showStatus(
-                                "Invalid trip-data.json file.",
-                                "error"
-                            );
-
-                        }
-
-
-                        event.target.value = "";
-
-                    };
-
-
-                reader.readAsText(file);
-
-            }
-        );
-
-
-    /* ============================================================
-       STATUS MESSAGE
-    ============================================================ */
-
-    function showStatus(message, type) {
-
-        const element =
-            document.getElementById(
-                "statusMessage"
-            );
-
-        element.textContent = message;
-
-        element.className =
-            `status ${type}`;
-
-
-        setTimeout(
-            function () {
-
-                element.className =
-                    "status";
-
-            },
-            5000
-        );
+        reader.readAsText(file);
 
     }
+);
 
 
-    /* ============================================================
-       FORMAT NUMBER
-    ============================================================ */
+document.getElementById("updateDataBtn").addEventListener("click", async function () {
 
-    function formatNumber(value) {
+    const ok = await flushSave(true);
 
-        return Number(value || 0)
-            .toLocaleString(
-                "en-IN",
-                {
-                    maximumFractionDigits: 2
-                }
-            );
-
+    if (ok) {
+        renderAll();
     }
 
+});
 
-    /* ============================================================
-       FORMAT CURRENCY
-    ============================================================ */
 
-    function formatCurrency(value) {
+document.getElementById("resetBtn").addEventListener("click", function () {
 
-        return "₹" +
-            Number(value || 0)
-                .toLocaleString(
-                    "en-IN",
-                    {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2
-                    }
-                );
-
+    if (!confirm(
+        "This clears every member and expense for this trip.\n\nContinue?"
+    )) {
+        return;
     }
 
+    data = emptyData();
 
-    /* ============================================================
-       ESCAPE HTML
-    ============================================================ */
+    renderAll();
+    setSyncStatus("pending");
 
-    function escapeHtml(value) {
+    showToast("Cleared locally. Press Save to update Firestore.");
 
-        return String(value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+});
 
+
+/* Nothing auto-saves anymore, so warn before closing the tab with
+   changes that were never pushed to Firestore via the Save button. */
+
+window.addEventListener("beforeunload", function (event) {
+
+    const status = document.getElementById("syncStatus");
+
+    if (status && status.classList.contains("sync-pending")) {
+        event.preventDefault();
+        event.returnValue = "";
     }
 
+});
+
+
+/* ============================================================
+   START
+============================================================ */
+
+document.getElementById("footerTripId").textContent = TRIP_ID;
+
+showScreen("home");
+
+loadData().then(renderAll);
 </script>
 
 </body>

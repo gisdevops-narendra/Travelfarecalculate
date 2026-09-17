@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Trip Expense Splitter — one document per trip at trips/{tripId}.
+    // The app signs everyone in anonymously (see index.html), so
+    // request.auth is only null for requests that bypass the SDK
+    // entirely (e.g. a raw curl with just the public API key).
+    match /trips/{tripId} {
+
+      allow read: if isSignedIn();
+
+      allow create, update: if isSignedIn() && isValidTrip(request.resource.data);
+
+      // The app never deletes a trip document — "Clear all data"
+      // overwrites it with an empty-but-valid shape instead.
+      allow delete: if false;
+    }
+
+    // Everything else is denied by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  // Defense in depth beyond auth: only the known shape can be written.
+  // (Firestore itself already hard-caps every document at 1MiB; rules
+  // have no byte-size function, so the app's own validateTripData()
+  // rejects oversized payloads before they're ever sent.)
+  function isValidTrip(data) {
+    return data.keys().hasOnly(['members', 'travel', 'food', 'sightseeing', 'hotel'])
+      && data.members is list
+      && data.travel is map
+      && data.food is map
+      && data.sightseeing is map
+      && data.hotel is map;
+  }
+}
