@@ -41,9 +41,10 @@
         max-width: 1200px;
         margin: auto;
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        gap: 15px;
+        gap: 10px 15px;
     }
 
     .header-title {
@@ -245,15 +246,23 @@
         border-bottom: none;
     }
 
-    td input {
+    td input,
+    td select {
         width: 100%;
         padding: 9px;
         border: 1px solid #d1d5db;
         border-radius: 7px;
         outline: none;
+        background: white;
+        color: inherit;
     }
 
-    td input:focus {
+    td select {
+        cursor: pointer;
+    }
+
+    td input:focus,
+    td select:focus {
         border-color: #2563eb;
     }
 
@@ -590,15 +599,20 @@
 
     .settle-tx {
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        gap: 10px;
+        gap: 8px 10px;
         padding: 12px 14px;
         border: 1px solid #e5e7eb;
         border-radius: 10px;
         background: #f8fafc;
         margin-bottom: 10px;
         font-size: 14px;
+    }
+
+    .settle-tx span:first-child {
+        overflow-wrap: anywhere;
     }
 
     @media (max-width: 700px) {
@@ -925,6 +939,10 @@
                     Add trip members
                 </button>
 
+                <button id="saveTravelBtn" class="btn btn-primary">
+                    💾 Save
+                </button>
+
             </div>
 
         </div>
@@ -1008,6 +1026,10 @@
 
                 <button id="addFoodBtn" class="btn btn-primary">
                     ＋ Add bill
+                </button>
+
+                <button id="saveFoodBtn" class="btn btn-primary">
+                    💾 Save
                 </button>
 
             </div>
@@ -1096,6 +1118,10 @@
                     ＋ Add place
                 </button>
 
+                <button id="saveSightBtn" class="btn btn-primary">
+                    💾 Save
+                </button>
+
             </div>
 
         </div>
@@ -1180,6 +1206,10 @@
 
                 <button id="addHotelBtn" class="btn btn-primary">
                     ＋ Add room
+                </button>
+
+                <button id="saveHotelBtn" class="btn btn-primary">
+                    💾 Save
                 </button>
 
             </div>
@@ -1937,6 +1967,54 @@ function paidByOptionsHtml(selectedId) {
 }
 
 
+/* Options list for the passenger-name dropdown: pulled from trip
+   members, so passenger details never need to be typed manually.
+   Members already picked for another passenger row are hidden here
+   so the same person can't be selected twice. */
+
+function passengerNameOptionsHtml(selectedName, usedNames) {
+
+    const trimmedSelected = String(selectedName || "").trim();
+
+    const memberNames = data.members
+        .map(function (m) {
+            return m.name.trim();
+        })
+        .filter(function (name) {
+            return name;
+        })
+        .filter(function (name) {
+            return name === trimmedSelected || !usedNames.has(name);
+        });
+
+    const options = ['<option value="">— Select member —</option>'];
+
+    memberNames.forEach(function (name) {
+
+        options.push(`
+            <option value="${escapeHtml(name)}"
+                    ${name === trimmedSelected ? "selected" : ""}>
+                ${escapeHtml(name)}
+            </option>
+        `);
+
+    });
+
+    if (trimmedSelected && memberNames.indexOf(trimmedSelected) === -1) {
+
+        options.push(`
+            <option value="${escapeHtml(trimmedSelected)}" selected>
+                ${escapeHtml(trimmedSelected)}
+            </option>
+        `);
+
+    }
+
+    return options.join("");
+
+}
+
+
 function paidByHtml(module, entry) {
 
     return `
@@ -2096,10 +2174,10 @@ document.getElementById("addMemberBtn").addEventListener("click", function () {
 function renderTravel() {
 
     document.getElementById("totalTripKm").value =
-        data.travel.trip.totalTripKm || 0;
+        data.travel.trip.totalTripKm || "";
 
     document.getElementById("ratePerKm").value =
-        data.travel.trip.ratePerKm || 0;
+        data.travel.trip.ratePerKm || "";
 
     document.getElementById("tripPaidBy").innerHTML =
         paidByOptionsHtml(data.travel.trip.paidBy);
@@ -2118,28 +2196,40 @@ function renderTravel() {
         tbody.innerHTML = data.travel.passengers.map(
             function (passenger, index) {
 
+                const usedNames = new Set(
+                    data.travel.passengers
+                        .filter(function (p, i) {
+                            return i !== index;
+                        })
+                        .map(function (p) {
+                            return String(p.name || "").trim();
+                        })
+                        .filter(function (name) {
+                            return name;
+                        })
+                );
+
                 return `
                     <tr>
                         <td>${index + 1}</td>
                         <td>
-                            <input type="text"
-                                   data-passenger="${index}"
-                                   data-field="name"
-                                   value="${escapeHtml(passenger.name || "")}"
-                                   placeholder="Passenger name">
+                            <select data-passenger="${index}"
+                                    data-field="name">
+                                ${passengerNameOptionsHtml(passenger.name, usedNames)}
+                            </select>
                         </td>
                         <td>
                             <input type="number" min="0" step="1"
                                    data-passenger="${index}"
                                    data-field="pickup"
-                                   value="${passenger.pickup ?? ""}"
+                                   value="${passenger.pickup || ""}"
                                    placeholder="Pickup">
                         </td>
                         <td>
                             <input type="number" min="0" step="1"
                                    data-passenger="${index}"
                                    data-field="drop"
-                                   value="${passenger.drop ?? ""}"
+                                   value="${passenger.drop || ""}"
                                    placeholder="Drop">
                         </td>
                         <td class="travel-km" id="travel-${index}">0 KM</td>
@@ -2267,35 +2357,44 @@ document.getElementById("tripPaidBy").addEventListener("change", function () {
 });
 
 
+function handlePassengerFieldChange(event) {
+
+    const index = event.target.dataset.passenger;
+
+    if (index === undefined) {
+        return;
+    }
+
+    const passenger = data.travel.passengers[Number(index)];
+
+    if (!passenger) {
+        return;
+    }
+
+    const field = event.target.dataset.field;
+
+    if (field === "name") {
+        passenger.name = event.target.value;
+    } else {
+        passenger[field] = num(event.target.value);
+    }
+
+    saveData();
+    calculateFare();
+    renderOverall();
+
+}
+
+
 document.getElementById("passengerTableBody").addEventListener(
     "input",
-    function (event) {
+    handlePassengerFieldChange
+);
 
-        const index = event.target.dataset.passenger;
 
-        if (index === undefined) {
-            return;
-        }
-
-        const passenger = data.travel.passengers[Number(index)];
-
-        if (!passenger) {
-            return;
-        }
-
-        const field = event.target.dataset.field;
-
-        if (field === "name") {
-            passenger.name = event.target.value;
-        } else {
-            passenger[field] = num(event.target.value);
-        }
-
-        saveData();
-        calculateFare();
-        renderOverall();
-
-    }
+document.getElementById("passengerTableBody").addEventListener(
+    "change",
+    handlePassengerFieldChange
 );
 
 
@@ -2404,6 +2503,20 @@ document.getElementById("fillFromMembersBtn").addEventListener(
                 ? `${added} passenger(s) added.`
                 : "All members are already passengers."
         );
+
+    }
+);
+
+
+document.getElementById("saveTravelBtn").addEventListener(
+    "click",
+    async function () {
+
+        const ok = await flushSave(true);
+
+        if (ok) {
+            renderAll();
+        }
 
     }
 );
@@ -2936,6 +3049,20 @@ document.getElementById("addFoodBtn").addEventListener("click", function () {
 attachEntryListeners("foodEntries", "food");
 
 
+document.getElementById("saveFoodBtn").addEventListener(
+    "click",
+    async function () {
+
+        const ok = await flushSave(true);
+
+        if (ok) {
+            renderAll();
+        }
+
+    }
+);
+
+
 /* ============================================================
    SIGHTSEEING
 ============================================================ */
@@ -3077,6 +3204,20 @@ document.getElementById("addSightBtn").addEventListener("click", function () {
 attachEntryListeners("sightEntries", "sightseeing");
 
 
+document.getElementById("saveSightBtn").addEventListener(
+    "click",
+    async function () {
+
+        const ok = await flushSave(true);
+
+        if (ok) {
+            renderAll();
+        }
+
+    }
+);
+
+
 /* ============================================================
    HOTEL
 ============================================================ */
@@ -3212,6 +3353,20 @@ document.getElementById("addHotelBtn").addEventListener("click", function () {
 
 
 attachEntryListeners("hotelEntries", "hotel");
+
+
+document.getElementById("saveHotelBtn").addEventListener(
+    "click",
+    async function () {
+
+        const ok = await flushSave(true);
+
+        if (ok) {
+            renderAll();
+        }
+
+    }
+);
 
 
 /* ============================================================
