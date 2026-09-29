@@ -266,8 +266,6 @@
         border-color: #2563eb;
     }
 
-    .travel-km,
-    .fare,
     .amount {
         font-weight: 700;
         white-space: nowrap;
@@ -848,52 +846,24 @@
         <div class="card">
 
             <div class="card-title">
-                Trip details
-            </div>
-
-            <div class="trip-settings">
-
-                <div class="setting-box">
-                    <label for="totalTripKm">Total trip KM</label>
-                    <input type="number" id="totalTripKm" min="0" step="1">
-                </div>
-
-                <div class="setting-box">
-                    <label for="ratePerKm">Vehicle rate / KM (₹)</label>
-                    <input type="number" id="ratePerKm" min="0" step="0.01">
-                </div>
-
-                <div class="setting-box">
-                    <label for="tripPaidBy">Paid by (fuel / rental)</label>
-                    <select id="tripPaidBy"></select>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="card">
-
-            <div class="card-title">
-                Trip summary
+                Travel summary
             </div>
 
             <div class="summary-grid">
 
                 <div class="summary-box">
-                    <div class="summary-label">Total trip cost</div>
-                    <div id="totalTripCost" class="summary-value">₹0</div>
+                    <div class="summary-label">Total travel cost</div>
+                    <div id="travelTotalCost" class="summary-value">₹0</div>
                 </div>
 
                 <div class="summary-box">
-                    <div class="summary-label">Total passenger KM</div>
-                    <div id="totalPassengerKm" class="summary-value">0 KM</div>
+                    <div class="summary-label">Tickets added</div>
+                    <div id="travelEntryCount" class="summary-value">0</div>
                 </div>
 
                 <div class="summary-box">
-                    <div class="summary-label">Passengers</div>
-                    <div id="passengerCount" class="summary-value">0</div>
+                    <div class="summary-label">People travelling</div>
+                    <div id="travelPeopleCount" class="summary-value">0</div>
                 </div>
 
             </div>
@@ -904,39 +874,19 @@
         <div class="card">
 
             <div class="card-title">
-                Passenger details
+                Tickets
             </div>
 
-            <div class="table-wrapper">
-
-                <table class="wide-table">
-
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Passenger name</th>
-                            <th>Pickup odometer</th>
-                            <th>Drop odometer</th>
-                            <th>Travel KM</th>
-                            <th>Fare</th>
-                            <th>Delete</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="passengerTableBody"></tbody>
-
-                </table>
-
+            <div class="card-note">
+                Add each ticket (bus, train, flight, cab), enter the fare per person and tick who travelled. Each person pays their own ticket.
             </div>
+
+            <div id="travelEntries"></div>
 
             <div class="actions">
 
-                <button id="addPassengerBtn" class="btn btn-primary">
-                    ＋ Add passenger
-                </button>
-
-                <button id="fillFromMembersBtn" class="btn btn-secondary">
-                    Add trip members
+                <button id="addTravelBtn" class="btn btn-primary">
+                    ＋ Add ticket
                 </button>
 
                 <button id="saveTravelBtn" class="btn btn-primary">
@@ -951,23 +901,24 @@
         <div class="card">
 
             <div class="card-title">
-                How the fare is split
+                Travel split per person
             </div>
 
-            <div class="formula">
+            <div class="table-wrapper">
 
-                <strong>1. Total trip cost</strong><br>
-                Total trip KM × rate per KM
+                <table>
 
-                <br><br>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Tickets</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
 
-                <strong>2. Passenger travel KM</strong><br>
-                Drop odometer − pickup odometer
+                    <tbody id="travelSplitBody"></tbody>
 
-                <br><br>
-
-                <strong>3. Passenger fare</strong><br>
-                (Passenger travel KM ÷ total passenger KM) × total trip cost
+                </table>
 
             </div>
 
@@ -1508,12 +1459,7 @@ function emptyData() {
     return {
         members: [],
         travel: {
-            trip: {
-                totalTripKm: 0,
-                ratePerKm: 0,
-                paidBy: ""
-            },
-            passengers: []
+            entries: []
         },
         food: {
             entries: []
@@ -1638,7 +1584,8 @@ async function loadData() {
 }
 
 
-/* Accepts both the new format and the old trip-data.json format. */
+/* Old odometer-based travel data (trip KM / passengers) is dropped:
+   travel is now a list of per-person tickets like the other modules. */
 
 function normalise(input) {
 
@@ -1648,26 +1595,6 @@ function normalise(input) {
         return base;
     }
 
-    /* Old format: { trip: {...}, passengers: [...] } */
-
-    if (input.trip && Array.isArray(input.passengers)) {
-
-        base.travel.trip.totalTripKm = num(input.trip.totalTripKm);
-        base.travel.trip.ratePerKm = num(input.trip.ratePerKm);
-        base.travel.trip.paidBy = String(input.trip.paidBy || "");
-        base.travel.passengers = input.passengers.map(function (p, i) {
-            return {
-                id: p.id || i + 1,
-                name: String(p.name || ""),
-                pickup: num(p.pickup),
-                drop: num(p.drop)
-            };
-        });
-
-        return base;
-
-    }
-
     if (Array.isArray(input.members)) {
 
         base.members = input.members
@@ -1675,46 +1602,17 @@ function normalise(input) {
                 return m && typeof m === "object";
             })
             .map(function (m) {
+                /* Ids are always strings: buttons hand them back via
+                   data-* attributes, and ids are compared with ===. */
                 return {
-                    id: m.id || uid(),
+                    id: String(m.id || uid()),
                     name: String(m.name || "")
                 };
             });
 
     }
 
-    if (input.travel && typeof input.travel === "object") {
-
-        base.travel.trip.totalTripKm = num(
-            input.travel.trip && input.travel.trip.totalTripKm
-        );
-
-        base.travel.trip.ratePerKm = num(
-            input.travel.trip && input.travel.trip.ratePerKm
-        );
-
-        base.travel.trip.paidBy = String(
-            (input.travel.trip && input.travel.trip.paidBy) || ""
-        );
-
-        if (Array.isArray(input.travel.passengers)) {
-
-            base.travel.passengers = input.travel.passengers.map(
-                function (p, i) {
-                    return {
-                        id: p.id || i + 1,
-                        name: String(p.name || ""),
-                        pickup: num(p.pickup),
-                        drop: num(p.drop)
-                    };
-                }
-            );
-
-        }
-
-    }
-
-    ["food", "sightseeing", "hotel"].forEach(function (key) {
+    ["travel", "food", "sightseeing", "hotel"].forEach(function (key) {
 
         const section = input[key];
 
@@ -1725,7 +1623,7 @@ function normalise(input) {
         base[key].entries = section.entries.map(function (e) {
 
             return {
-                id: e.id || uid(),
+                id: String(e.id || uid()),
                 label: String(e.label || ""),
                 amount: num(e.amount),
                 pricePerPerson: num(e.pricePerPerson),
@@ -1861,7 +1759,7 @@ const SCREENS = {
     travel: {
         id: "travelScreen",
         title: "🚗 Travel",
-        subtitle: "Odometer-based fare split"
+        subtitle: "Tickets per person"
     },
     food: {
         id: "foodScreen",
@@ -1967,54 +1865,6 @@ function paidByOptionsHtml(selectedId) {
 }
 
 
-/* Options list for the passenger-name dropdown: pulled from trip
-   members, so passenger details never need to be typed manually.
-   Members already picked for another passenger row are hidden here
-   so the same person can't be selected twice. */
-
-function passengerNameOptionsHtml(selectedName, usedNames) {
-
-    const trimmedSelected = String(selectedName || "").trim();
-
-    const memberNames = data.members
-        .map(function (m) {
-            return m.name.trim();
-        })
-        .filter(function (name) {
-            return name;
-        })
-        .filter(function (name) {
-            return name === trimmedSelected || !usedNames.has(name);
-        });
-
-    const options = ['<option value="">— Select member —</option>'];
-
-    memberNames.forEach(function (name) {
-
-        options.push(`
-            <option value="${escapeHtml(name)}"
-                    ${name === trimmedSelected ? "selected" : ""}>
-                ${escapeHtml(name)}
-            </option>
-        `);
-
-    });
-
-    if (trimmedSelected && memberNames.indexOf(trimmedSelected) === -1) {
-
-        options.push(`
-            <option value="${escapeHtml(trimmedSelected)}" selected>
-                ${escapeHtml(trimmedSelected)}
-            </option>
-        `);
-
-    }
-
-    return options.join("");
-
-}
-
-
 function paidByHtml(module, entry) {
 
     return `
@@ -2103,11 +1953,13 @@ document.getElementById("memberTableBody").addEventListener(
     "click",
     function (event) {
 
-        const id = event.target.dataset.memberDelete;
+        const button = event.target.closest("[data-member-delete]");
 
-        if (!id) {
+        if (!button) {
             return;
         }
+
+        const id = button.dataset.memberDelete;
 
         const name = memberName(id) || "this member";
 
@@ -2119,7 +1971,7 @@ document.getElementById("memberTableBody").addEventListener(
             return m.id !== id;
         });
 
-        ["food", "sightseeing", "hotel"].forEach(function (key) {
+        ["travel", "food", "sightseeing", "hotel"].forEach(function (key) {
 
             data[key].entries.forEach(function (entry) {
 
@@ -2135,14 +1987,15 @@ document.getElementById("memberTableBody").addEventListener(
 
         });
 
-        if (data.travel.trip.paidBy === id) {
-            data.travel.trip.paidBy = "";
-        }
-
-        saveData();
         renderAll();
 
-        showToast(`${name} removed.`);
+        /* A confirmed removal is written to Firestore straight away,
+           otherwise a reload brings the member back. */
+        flushSave(false).then(function (ok) {
+            if (ok) {
+                showToast(`${name} removed.`, "success");
+            }
+        });
 
     }
 );
@@ -2173,74 +2026,68 @@ document.getElementById("addMemberBtn").addEventListener("click", function () {
 
 function renderTravel() {
 
-    document.getElementById("totalTripKm").value =
-        data.travel.trip.totalTripKm || "";
+    const container = document.getElementById("travelEntries");
 
-    document.getElementById("ratePerKm").value =
-        data.travel.trip.ratePerKm || "";
+    if (data.travel.entries.length === 0) {
 
-    document.getElementById("tripPaidBy").innerHTML =
-        paidByOptionsHtml(data.travel.trip.paidBy);
-
-    const tbody = document.getElementById("passengerTableBody");
-
-    if (data.travel.passengers.length === 0) {
-
-        tbody.innerHTML =
-            '<tr class="empty-row"><td colspan="7">' +
-            "No passengers yet." +
-            "</td></tr>";
+        container.innerHTML =
+            '<div class="card-note" style="margin:0">' +
+            "No tickets yet." +
+            "</div>";
 
     } else {
 
-        tbody.innerHTML = data.travel.passengers.map(
-            function (passenger, index) {
+        container.innerHTML = data.travel.entries.map(
+            function (entry, index) {
 
-                const usedNames = new Set(
-                    data.travel.passengers
-                        .filter(function (p, i) {
-                            return i !== index;
-                        })
-                        .map(function (p) {
-                            return String(p.name || "").trim();
-                        })
-                        .filter(function (name) {
-                            return name;
-                        })
-                );
+                const people = validMemberIds(entry);
+
+                const amounts = entryAmounts("travel", entry, people.length);
 
                 return `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>
-                            <select data-passenger="${index}"
-                                    data-field="name">
-                                ${passengerNameOptionsHtml(passenger.name, usedNames)}
-                            </select>
-                        </td>
-                        <td>
-                            <input type="number" min="0" step="1"
-                                   data-passenger="${index}"
-                                   data-field="pickup"
-                                   value="${passenger.pickup || ""}"
-                                   placeholder="Pickup">
-                        </td>
-                        <td>
-                            <input type="number" min="0" step="1"
-                                   data-passenger="${index}"
-                                   data-field="drop"
-                                   value="${passenger.drop || ""}"
-                                   placeholder="Drop">
-                        </td>
-                        <td class="travel-km" id="travel-${index}">0 KM</td>
-                        <td class="fare" id="fare-${index}">₹0</td>
-                        <td>
+                    <div class="entry">
+
+                        <div class="entry-head">
+                            <div class="entry-index">Ticket ${index + 1}</div>
                             <button class="delete-btn"
-                                    data-passenger-delete="${index}">
+                                    data-entry-delete="${entry.id}">
                                 🗑 Delete
                             </button>
-                        </td>
-                    </tr>
+                        </div>
+
+                        <div class="entry-fields">
+
+                            <div>
+                                <label>Ticket</label>
+                                <input type="text"
+                                       data-entry="${entry.id}"
+                                       data-field="label"
+                                       value="${escapeHtml(entry.label)}"
+                                       placeholder="Bus Ahmedabad → Udaipur">
+                            </div>
+
+                            <div>
+                                <label>Fare per person (₹)</label>
+                                <input type="number" min="0" step="0.01"
+                                       data-entry="${entry.id}"
+                                       data-field="pricePerPerson"
+                                       value="${entry.pricePerPerson || ""}"
+                                       placeholder="0">
+                            </div>
+
+                        </div>
+
+                        ${paidByHtml("travel", entry)}
+
+                        <div class="people-label">Who travelled</div>
+
+                        ${chipsHtml("travel", entry)}
+
+                        <div class="entry-result" id="result-${entry.id}">
+                            ${resultText(amounts, people)}
+                        </div>
+
+                    </div>
                 `;
 
             }
@@ -2248,264 +2095,57 @@ function renderTravel() {
 
     }
 
-    calculateFare();
+    renderTravelTotals();
 
 }
 
 
-function travelBreakdown() {
+function renderTravelTotals() {
 
-    const totalTripCost =
-        num(data.travel.trip.totalTripKm) *
-        num(data.travel.trip.ratePerKm);
+    const split = splitModule("travel");
 
-    const kmList = data.travel.passengers.map(function (passenger) {
+    document.getElementById("travelTotalCost").textContent =
+        formatCurrency(split.total);
 
-        const km = num(passenger.drop) - num(passenger.pickup);
+    document.getElementById("travelEntryCount").textContent =
+        data.travel.entries.length;
 
-        return km > 0 ? km : 0;
-
-    });
-
-    const totalPassengerKm = kmList.reduce(function (sum, km) {
-        return sum + km;
-    }, 0);
-
-    const fares = kmList.map(function (km) {
-
-        if (totalPassengerKm <= 0) {
-            return 0;
-        }
-
-        return (km / totalPassengerKm) * totalTripCost;
-
-    });
-
-    return {
-        totalTripCost: totalTripCost,
-        totalPassengerKm: totalPassengerKm,
-        kmList: kmList,
-        fares: fares
-    };
-
-}
-
-
-function calculateFare() {
-
-    const result = travelBreakdown();
-
-    result.kmList.forEach(function (km, index) {
-
-        const kmCell = document.getElementById(`travel-${index}`);
-        const fareCell = document.getElementById(`fare-${index}`);
-
-        if (kmCell) {
-            kmCell.textContent = `${formatNumber(km)} KM`;
-        }
-
-        if (fareCell) {
-            fareCell.textContent = formatCurrency(result.fares[index]);
-        }
-
-    });
-
-    document.getElementById("totalTripCost").textContent =
-        formatCurrency(result.totalTripCost);
-
-    document.getElementById("totalPassengerKm").textContent =
-        `${formatNumber(result.totalPassengerKm)} KM`;
-
-    document.getElementById("passengerCount").textContent =
-        data.travel.passengers.length;
+    document.getElementById("travelPeopleCount").textContent =
+        peopleInvolved("travel");
 
     document.getElementById("homeTotalTravel").textContent =
-        formatCurrency(result.totalTripCost);
+        formatCurrency(split.total);
+
+    document.getElementById("travelSplitBody").innerHTML =
+        splitTableHtml("travel");
 
 }
 
 
-document.getElementById("totalTripKm").addEventListener("input", function () {
+document.getElementById("addTravelBtn").addEventListener("click", function () {
 
-    data.travel.trip.totalTripKm = num(this.value);
+    data.travel.entries.push({
+        id: uid(),
+        label: "",
+        amount: 0,
+        pricePerPerson: 0,
+        extraCost: 0,
+        nights: 0,
+        ratePerNight: 0,
+        paidBy: "",
+        people: data.members.map(function (m) {
+            return m.id;
+        })
+    });
 
     saveData();
-    calculateFare();
+    renderTravel();
     renderOverall();
 
 });
 
 
-document.getElementById("ratePerKm").addEventListener("input", function () {
-
-    data.travel.trip.ratePerKm = num(this.value);
-
-    saveData();
-    calculateFare();
-    renderOverall();
-
-});
-
-
-document.getElementById("tripPaidBy").addEventListener("change", function () {
-
-    data.travel.trip.paidBy = this.value;
-
-    saveData();
-    renderSettlement();
-
-});
-
-
-function handlePassengerFieldChange(event) {
-
-    const index = event.target.dataset.passenger;
-
-    if (index === undefined) {
-        return;
-    }
-
-    const passenger = data.travel.passengers[Number(index)];
-
-    if (!passenger) {
-        return;
-    }
-
-    const field = event.target.dataset.field;
-
-    if (field === "name") {
-        passenger.name = event.target.value;
-    } else {
-        passenger[field] = num(event.target.value);
-    }
-
-    saveData();
-    calculateFare();
-    renderOverall();
-
-}
-
-
-document.getElementById("passengerTableBody").addEventListener(
-    "input",
-    handlePassengerFieldChange
-);
-
-
-document.getElementById("passengerTableBody").addEventListener(
-    "change",
-    handlePassengerFieldChange
-);
-
-
-document.getElementById("passengerTableBody").addEventListener(
-    "click",
-    function (event) {
-
-        const index = event.target.dataset.passengerDelete;
-
-        if (index === undefined) {
-            return;
-        }
-
-        const passenger = data.travel.passengers[Number(index)];
-
-        const name =
-            passenger && passenger.name
-                ? passenger.name
-                : "this passenger";
-
-        if (!confirm(`Delete ${name} from the travel split?`)) {
-            return;
-        }
-
-        data.travel.passengers.splice(Number(index), 1);
-
-        saveData();
-        renderTravel();
-        renderOverall();
-
-        showToast("Passenger deleted.");
-
-    }
-);
-
-
-document.getElementById("addPassengerBtn").addEventListener(
-    "click",
-    function () {
-
-        data.travel.passengers.push({
-            id: uid(),
-            name: "",
-            pickup: 0,
-            drop: 0
-        });
-
-        saveData();
-        renderTravel();
-
-    }
-);
-
-
-document.getElementById("fillFromMembersBtn").addEventListener(
-    "click",
-    function () {
-
-        if (data.members.length === 0) {
-
-            showToast("Add trip members on the home screen first.", "error");
-
-            return;
-
-        }
-
-        let added = 0;
-
-        data.members.forEach(function (member) {
-
-            const name = member.name.trim();
-
-            if (!name) {
-                return;
-            }
-
-            const exists = data.travel.passengers.some(function (p) {
-
-                return (
-                    String(p.name).trim().toLowerCase() ===
-                    name.toLowerCase()
-                );
-
-            });
-
-            if (exists) {
-                return;
-            }
-
-            data.travel.passengers.push({
-                id: uid(),
-                name: name,
-                pickup: 0,
-                drop: 0
-            });
-
-            added += 1;
-
-        });
-
-        saveData();
-        renderTravel();
-
-        showToast(
-            added > 0
-                ? `${added} passenger(s) added.`
-                : "All members are already passengers."
-        );
-
-    }
-);
+attachEntryListeners("travelEntries", "travel");
 
 
 document.getElementById("saveTravelBtn").addEventListener(
@@ -2523,7 +2163,7 @@ document.getElementById("saveTravelBtn").addEventListener(
 
 
 /* ============================================================
-   SHARED ENTRY RENDERING (FOOD / SIGHTSEEING / HOTEL)
+   SHARED ENTRY RENDERING (TRAVEL / FOOD / SIGHTSEEING / HOTEL)
 ============================================================ */
 
 function chipsHtml(module, entry) {
@@ -2616,7 +2256,11 @@ function entryAmounts(module, entry, headCount) {
 
     let total = 0;
 
-    if (module === "food") {
+    if (module === "travel") {
+
+        total = num(entry.pricePerPerson) * headCount;
+
+    } else if (module === "food") {
 
         total = num(entry.amount);
 
@@ -2688,7 +2332,7 @@ function peopleInvolved(module) {
 }
 
 
-/* Checkbox + select-all handling, shared by the three modules. */
+/* Checkbox + select-all handling, shared by every module. */
 
 function attachEntryListeners(containerId, module) {
 
@@ -2822,11 +2466,14 @@ function attachEntryListeners(containerId, module) {
                 }
             );
 
-            saveData();
             renderModule(module);
             renderOverall();
 
-            showToast("Entry deleted.");
+            flushSave(false).then(function (ok) {
+                if (ok) {
+                    showToast("Entry deleted.", "success");
+                }
+            });
 
         }
 
@@ -2846,7 +2493,9 @@ function findEntry(module, id) {
 
 function renderModule(module) {
 
-    if (module === "food") {
+    if (module === "travel") {
+        renderTravel();
+    } else if (module === "food") {
         renderFood();
     } else if (module === "sightseeing") {
         renderSightseeing();
@@ -2875,7 +2524,11 @@ function refreshModuleTotals(module) {
 
     });
 
-    if (module === "food") {
+    if (module === "travel") {
+
+        renderTravelTotals();
+
+    } else if (module === "food") {
 
         renderFoodTotals();
 
@@ -3377,27 +3030,10 @@ function renderOverall() {
 
     const tbody = document.getElementById("overallTableBody");
 
+    const travel = splitModule("travel");
     const food = splitModule("food");
     const sight = splitModule("sightseeing");
     const hotel = splitModule("hotel");
-
-    const travel = travelBreakdown();
-
-    /* Travel rows are matched to members by name. */
-
-    const travelByName = {};
-
-    data.travel.passengers.forEach(function (passenger, index) {
-
-        const key = String(passenger.name || "").trim().toLowerCase();
-
-        if (!key) {
-            return;
-        }
-
-        travelByName[key] = (travelByName[key] || 0) + travel.fares[index];
-
-    });
 
     const rows = [];
 
@@ -3405,14 +3041,7 @@ function renderOverall() {
 
     data.members.forEach(function (member) {
 
-        const key = member.name.trim().toLowerCase();
-
-        const travelAmount = key ? travelByName[key] || 0 : 0;
-
-        if (key) {
-            delete travelByName[key];
-        }
-
+        const travelAmount = travel.perPerson[member.id] || 0;
         const foodAmount = food.perPerson[member.id] || 0;
         const sightAmount = sight.perPerson[member.id] || 0;
         const hotelAmount = hotel.perPerson[member.id] || 0;
@@ -3429,33 +3058,6 @@ function renderOverall() {
             sight: sightAmount,
             hotel: hotelAmount,
             total: total
-        });
-
-    });
-
-    /* Passengers who are not in the member list still get a row. */
-
-    data.travel.passengers.forEach(function (passenger, index) {
-
-        const key = String(passenger.name || "").trim().toLowerCase();
-
-        if (!key || travelByName[key] === undefined) {
-            return;
-        }
-
-        const amount = travelByName[key];
-
-        delete travelByName[key];
-
-        grandTotal += amount;
-
-        rows.push({
-            name: passenger.name.trim(),
-            travel: amount,
-            food: 0,
-            sight: 0,
-            hotel: 0,
-            total: amount
         });
 
     });
@@ -3548,46 +3150,10 @@ function computeSettlement() {
 
     }
 
-    /* Travel: the whole trip cost was paid by one person, and
-       every passenger owes their odometer-based share of it. */
+    /* Each entry was paid by one person, and only the people
+       ticked on that entry owe their per-head share of it. */
 
-    const travel = travelBreakdown();
-
-    addPaid(data.travel.trip.paidBy, travel.totalTripCost);
-
-    const travelByName = {};
-
-    data.travel.passengers.forEach(function (passenger, index) {
-
-        const key = String(passenger.name || "").trim().toLowerCase();
-
-        if (!key) {
-            return;
-        }
-
-        travelByName[key] = (travelByName[key] || 0) + travel.fares[index];
-
-    });
-
-    data.members.forEach(function (member) {
-
-        const key = member.name.trim().toLowerCase();
-
-        if (key && travelByName[key] !== undefined) {
-
-            addOwed(member.id, travelByName[key]);
-
-            delete travelByName[key];
-
-        }
-
-    });
-
-    /* Food, sightseeing, hotel: each entry was paid by one
-       person, and only the people ticked on that entry owe
-       their per-head share of it. */
-
-    ["food", "sightseeing", "hotel"].forEach(function (module) {
+    ["travel", "food", "sightseeing", "hotel"].forEach(function (module) {
 
         data[module].entries.forEach(function (entry) {
 
@@ -3617,31 +3183,6 @@ function computeSettlement() {
             owed: memberOwed,
             net: memberPaid - memberOwed
         };
-
-    });
-
-    /* Travel passengers who never made it onto the members list
-       still owe their share, but can never be a payer here. */
-
-    Object.keys(travelByName).forEach(function (key) {
-
-        const amount = travelByName[key];
-
-        if (!amount) {
-            return;
-        }
-
-        const passenger = data.travel.passengers.find(function (p) {
-            return String(p.name || "").trim().toLowerCase() === key;
-        });
-
-        rows.push({
-            id: null,
-            name: passenger ? passenger.name.trim() : key,
-            paid: 0,
-            owed: amount,
-            net: -amount
-        });
 
     });
 
