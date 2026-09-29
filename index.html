@@ -1520,7 +1520,7 @@ async function flushSave(showFeedback) {
     try {
 
         await ensureSignedIn();
-        await setDoc(tripDocRef(), clean);
+        await setDoc(tripDocRef(), toFirestore(clean));
 
         setSyncStatus("saved");
 
@@ -1593,6 +1593,23 @@ async function loadData() {
 }
 
 
+/* The deployed Firestore rules only allow the top-level keys
+   members / travel / food / sightseeing / hotel, so the trip payer
+   is stored inside the travel map. normalise() reads it back. */
+
+function toFirestore(clean) {
+
+    const doc = Object.assign({}, clean);
+
+    doc.travel = Object.assign({}, clean.travel, { paidBy: clean.paidBy });
+
+    delete doc.paidBy;
+
+    return doc;
+
+}
+
+
 /* Old odometer-based travel data (trip KM / passengers) is dropped:
    travel is now a list of per-person tickets like the other modules. */
 
@@ -1651,7 +1668,11 @@ function normalise(input) {
     /* One payer for the whole trip. Older data stored a payer on
        each entry; the first one found becomes the trip payer. */
 
-    base.paidBy = String(input.paidBy || "");
+    base.paidBy = String(
+        input.paidBy ||
+        (input.travel && input.travel.paidBy) ||
+        ""
+    );
 
     if (!base.paidBy) {
 
