@@ -33,7 +33,8 @@ service cloud.firestore {
   // have no byte-size function, so the app's own validateTripData()
   // rejects oversized payloads before they're ever sent.)
   function isValidTrip(data) {
-    return data.keys().hasOnly(['members', 'travel', 'food', 'sightseeing', 'hotel'])
+    return data.keys().hasOnly(['members', 'paidBy', 'travel', 'food', 'sightseeing', 'hotel'])
+      && (!('paidBy' in data) || data.paidBy is string)
       && data.members is list
       && data.travel is map
       && data.food is map
